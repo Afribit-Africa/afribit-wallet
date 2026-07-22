@@ -16,11 +16,17 @@ Based on both the existing `AfriBit-wallet` fork and Blink's current core, expec
 
 1. **Clone the repo.** On Windows, clone to a local NTFS path (not a Google Drive folder — npm and gradle fail on Drive's filesystem).
 2. **Install dependencies**: `cd apps/mobile && yarn install`.
-3. **Java + Android**: no separate JDK install needed if Android Studio is present — set `JAVA_HOME` to `C:\Program Files\Android\Android Studio\jbr` (OpenJDK 21). `ANDROID_HOME` should point at the SDK (default `%LOCALAPPDATA%\Android\Sdk`).
+3. **Java + Android**: no separate JDK install needed if Android Studio is present. **`JAVA_HOME` must be set as a real persistent environment variable** (System Properties > Environment Variables, or `[Environment]::SetEnvironmentVariable('JAVA_HOME', 'C:\Program Files\Android\Android Studio\jbr', 'User')` in PowerShell) — without it, `gradlew.bat` fails with a confusing "is not recognized as an internal or external command" error that looks like a PATH/missing-file problem but is actually gradlew's own JAVA_HOME check failing. Setting it only for one terminal session (`$env:JAVA_HOME = ...`) is not enough; a process tree already running (including an IDE integrated terminal) won't see a registry change until that root process restarts. `ANDROID_HOME` should point at the SDK (default `%LOCALAPPDATA%\Android\Sdk`).
 4. **Device**: enable USB debugging, plug in, confirm with `adb devices`.
 5. **Environment variables** — repo root `.env.example` → `.env` (GitHub token, Bitika sandbox key later). In `apps/mobile`, `.env.local.example` → `.env.local` if you need non-default endpoints. Never commit real credentials.
 6. **Run codegen** if the GraphQL schema has changed since the last pull.
-7. **Run the app**: `yarn start` (Metro) in one terminal, `yarn android` in another. First gradle build downloads SDK components and takes a while.
+7. **Run the app.** `yarn android` (react-native-community/cli-platform-android) has a real Windows bug in this repo as of RN 0.85.3/CLI: it fails with `'gradlew.bat' is not recognized as an internal or external command` even with `JAVA_HOME` set correctly and even from a native PowerShell session — the wrapper's own child-process spawn doesn't resolve the local `.bat` file the way running it directly does. Workaround, run each step directly instead of through the `yarn android` wrapper:
+   1. `adb reverse tcp:8081 tcp:8081` (lets the USB-connected device reach Metro on the host)
+   2. `yarn start` in `apps/mobile` (Metro, its own terminal/background process)
+   3. From `apps/mobile/android`: `.\gradlew.bat app:installDebug -PreactNativeDevServerPort=8081` (with `JAVA_HOME` set in that session)
+   4. Launch it on-device: `adb shell monkey -p com.galoyapp -c android.intent.category.LAUNCHER 1` (or tap the app icon)
+
+   First gradle build downloads Gradle 8.13 + NDK 27.3 and takes a while.
 8. **Run linting and formatting** (Prettier/ESLint) to confirm your environment matches what CI will expect.
 
 ## Sandbox credentials, not live ones

@@ -38,6 +38,17 @@ const config = {
     },
 
     resolverMainFields: ["sbmodern", "react-native", "browser", "main"],
+
+    // CMake's native build (triggered by `gradlew`) creates and deletes
+    // scratch directories under android/.cxx faster than Metro's Windows
+    // fallback watcher (no Watchman) can track, which crashes the whole
+    // process with an uncaught ENOENT. Exclude native build output from
+    // being watched at all — Metro never needs to see it.
+    blockList: [
+      /.*\/android\/\.cxx\/.*/,
+      /.*\/android\/build\/.*/,
+      /.*\/ios\/build\/.*/,
+    ],
   },
 }
 

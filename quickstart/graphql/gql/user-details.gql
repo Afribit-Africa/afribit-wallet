@@ -1,6 +1,0 @@
-query userDetails {
-  me {
-    id
-    language
-  }
-}

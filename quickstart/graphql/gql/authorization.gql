@@ -1,5 +1,0 @@
-query Authorization {
-  authorization {
-    scopes
-  }
-}

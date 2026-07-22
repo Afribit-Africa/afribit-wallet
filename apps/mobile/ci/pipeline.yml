@@ -1,0 +1,518 @@
+#@ load("@ytt:data", "data")
+
+#@ def pipeline_image():
+#@   return data.values.docker_registry + "/galoy-mobile-pipeline"
+#@ end
+
+#@ def release_pipeline_image():
+#@   return data.values.docker_registry + "/release-pipeline"
+#@ end
+
+#@ def task_image_config():
+type: registry-image
+source:
+  username: #@ data.values.docker_registry_user
+  password: #@ data.values.docker_registry_password
+  repository: #@ pipeline_image()
+#@ end
+
+#@ def release_task_image_config():
+type: registry-image
+source:
+  username: #@ data.values.docker_registry_user
+  password: #@ data.values.docker_registry_password
+  repository: #@ release_pipeline_image()
+#@ end
+
+#@ def claim_lock():
+put: mobile-concourse-lock
+params: { claim: mobile-concourse }
+#@ end
+
+#@ def release_lock():
+put: mobile-concourse-lock
+params: { release: mobile-concourse-lock }
+#@ end
+
+groups:
+- name: all
+  jobs:
+  - test-unit
+  - check-code
+  - install-deps
+  - dev-build
+  - cleanup-mac-build-worker
+  - prerelease
+  - prod-build
+- name: image
+  jobs:
+  - build-pipeline-image
+
+jobs:
+- name: install-deps
+  plan:
+  - in_parallel:
+    - { get: deps, trigger: true }
+    - { get: pipeline-tasks }
+    - { put: deps-version, params: { bump: patch } }
+  - task: install-deps
+    config:
+      platform: linux
+      image_resource: #@ task_image_config()
+      inputs:
+      - name: pipeline-tasks
+      - name: deps
+      - name: deps-version
+      outputs:
+      - name: bundled-deps
+      run:
+        path: pipeline-tasks/ci/tasks/install-deps.sh
+  - put: bundled-deps
+    params:
+      file: bundled-deps/bundled-deps-*.tgz
+
+- name: test-unit
+  plan:
+  - in_parallel:
+    - { get: repo, trigger: true }
+    - { get: bundled-deps, trigger: true }
+    - get: pipeline-tasks
+  - task: test-unit
+    config:
+      platform: linux
+      image_resource: #@ task_image_config()
+      inputs:
+      - name: bundled-deps
+      - name: pipeline-tasks
+      - name: repo
+      run:
+        path: pipeline-tasks/ci/tasks/test-unit.sh
+      params:
+        CI: true
+
+- name: check-code
+  plan:
+  - in_parallel:
+    - { get: repo, trigger: true }
+    - { get: bundled-deps, trigger: true }
+    - get: pipeline-tasks
+  - task: test-unit
+    config:
+      platform: linux
+      image_resource: #@ task_image_config()
+      inputs:
+      - name: bundled-deps
+      - name: pipeline-tasks
+      - name: repo
+      run:
+        path: pipeline-tasks/ci/tasks/check-code.sh
+
+- name: dev-build
+  serial: true
+  plan:
+  - in_parallel:
+    - get: repo
+      trigger: true
+      passed:
+      - test-unit
+      - check-code
+    - get: pipeline-tasks
+    - get: build-number-android
+    - get: build-number-ios
+  - #@ claim_lock()
+  - task: build
+    tags: [ mac-m1 ]
+    ensure: #@ release_lock()
+    config:
+      platform: darwin
+      inputs:
+      - name: repo
+      - name: pipeline-tasks
+      - name: build-number-android
+      - name: build-number-ios
+      outputs:
+      - name: repo
+      - name: artifacts
+      run:
+        path: /bin/sh
+        args: [ "-c", "arch -arm64 pipeline-tasks/ci/tasks/build.sh" ]
+      params:
+        CI: true
+        VERSION_FILE: repo/.git/ref
+        LANG: en_US.UTF-8
+        ANDROID_KEYSTORE: #@ data.values.android_keystore
+        MATCH_PASSWORD: #@ data.values.fastlane_match_password
+        MATCH_KEYCHAIN_PASSWORD: #@ data.values.fastlane_match_keychain_password
+        GITHUB_SSH_KEY: #@ data.values.github_private_key
+        APPSTORE_API_KEY: #@ data.values.appstore_api_key
+        APPSTORE_API_KEY_ID: #@ data.values.appstore_api_key_id
+        APPSTORE_ISSUER_ID: #@ data.values.appstore_issuer_id
+        SPARK_TOKEN_IDENTIFIER: #@ data.values.spark_token_identifier
+        BREEZ_API_KEY: #@ data.values.breez_api_key
+        GEO_IPIFY_API_KEY: #@ data.values.geo_ipify_api_key
+        IPINFO_API_KEY: #@ data.values.ipinfo_api_key
+        IPAPI_API_KEY: #@ data.values.ipapi_api_key
+        PROXYCHECK_API_KEY: #@ data.values.proxycheck_api_key
+        MIN_BUILD_FREE_GB: 30
+  - task: upload-to-gcs
+    config:
+      platform: linux
+      image_resource: #@ task_image_config()
+      inputs:
+      - name: repo
+      - name: artifacts
+      - name: pipeline-tasks
+      run:
+        path: pipeline-tasks/ci/tasks/upload-to-gcs.sh
+      params:
+        VERSION_FILE: repo/.git/ref
+        GCS_DIRECTORY: dev
+        bucket: #@ data.values.build_artifacts_bucket_name
+        json_key: #@ data.values.build_artifacts_bucket_creds
+
+- name: prerelease
+  serial: true
+  plan:
+  - in_parallel:
+    - get: daily
+      trigger: true
+    - get: repo
+      passed: ["dev-build"]
+      params:
+        fetch_tags: true
+    - get: built-dev-ipa
+    - get: built-dev-apk
+    - get: pipeline-tasks
+    - get: testflight-version
+  - task: check-same-commit
+    config:
+      platform: linux
+      image_resource: #@ release_task_image_config()
+      inputs:
+      - name: repo
+      - name: pipeline-tasks
+      - name: built-dev-ipa
+      - name: built-dev-apk
+      outputs:
+      - name: repo
+      - name: artifacts
+      run:
+        path: pipeline-tasks/ci/tasks/choose-commit-prerelease.sh
+  - task: prep-release
+    config:
+      platform: linux
+      image_resource: #@ release_task_image_config()
+      inputs:
+      - name: repo
+      - name: pipeline-tasks
+      - name: testflight-version
+      - name: artifacts
+      outputs:
+      - name: testflight-version
+      - name: artifacts
+      run:
+        path: pipeline-tasks/ci/tasks/prerelease.sh
+  - in_parallel:
+    - put: gh-prerelease
+      params:
+        name: artifacts/gh-release-name
+        tag: artifacts/gh-release-tag
+        body: artifacts/gh-release-notes.md
+        commitish: artifacts/commit-id
+    - put: testflight-version
+      params:
+        file: testflight-version/version
+
+- name: cleanup-mac-build-worker
+  serial: true
+  plan:
+  - in_parallel:
+    - get: daily
+      trigger: true
+    - get: pipeline-tasks
+  - #@ claim_lock()
+  - task: cleanup-mac-build-worker
+    tags: [ mac-m1 ]
+    ensure: #@ release_lock()
+    config:
+      platform: darwin
+      inputs:
+      - name: pipeline-tasks
+      run:
+        path: /bin/sh
+        args: [ "-c", "arch -arm64 pipeline-tasks/ci/tasks/macos-build-disk-cleanup.sh scheduled" ]
+      params:
+        MIN_BUILD_FREE_GB: 35
+
+- name: prod-build
+  serial: true
+  plan:
+  - in_parallel:
+    - get: repo
+      passed: ["prerelease"]
+    - get: build-number-android
+    - get: build-number-ios
+    - get: pipeline-tasks
+    - get: built-dev-apk
+      passed: [ "prerelease" ]
+      trigger: true
+    - get: built-dev-ipa
+      passed: [ "prerelease" ]
+      trigger: true
+    - get: testflight-version
+      passed: [ "prerelease" ]
+  - task: check-same-commit
+    config:
+      platform: linux
+      image_resource: #@ release_task_image_config()
+      inputs:
+      - name: repo
+      - name: pipeline-tasks
+      - name: built-dev-ipa
+      - name: built-dev-apk
+      outputs:
+      - name: repo
+      - name: artifacts
+      run:
+        path: pipeline-tasks/ci/tasks/choose-commit-prerelease.sh
+  - task: bump-and-commit-build-number
+    config:
+      platform: linux
+      image_resource: #@ task_image_config()
+      inputs:
+      - name: pipeline-tasks
+      - name: build-number-android
+      - name: build-number-ios
+      - name: testflight-version
+        path: version
+      outputs:
+      - name: build-number-android
+      - name: build-number-ios
+      run:
+        path: pipeline-tasks/ci/tasks/bump-and-commit-build-number.sh
+  - #@ claim_lock()
+  - task: build
+    tags: [ mac-m1 ]
+    ensure: #@ release_lock()
+    config:
+      platform: darwin
+      inputs:
+      - name: repo
+      - name: pipeline-tasks
+      - name: build-number-android
+      - name: build-number-ios
+      - name: testflight-version
+      outputs:
+      - name: repo
+      - name: artifacts
+      run:
+        path: /bin/sh
+        args: [ "-c", "arch -arm64 pipeline-tasks/ci/tasks/build.sh" ]
+      params:
+        CI: true
+        VERSION_FILE: testflight-version/version
+        LANG: en_US.UTF-8
+        ANDROID_KEYSTORE: #@ data.values.android_keystore
+        MATCH_PASSWORD: #@ data.values.fastlane_match_password
+        MATCH_KEYCHAIN_PASSWORD: #@ data.values.fastlane_match_keychain_password
+        GITHUB_SSH_KEY: #@ data.values.github_private_key
+        APPSTORE_API_KEY: #@ data.values.appstore_api_key
+        APPSTORE_API_KEY_ID: #@ data.values.appstore_api_key_id
+        APPSTORE_ISSUER_ID: #@ data.values.appstore_issuer_id
+        SPARK_TOKEN_IDENTIFIER: #@ data.values.spark_token_identifier
+        BREEZ_API_KEY: #@ data.values.breez_api_key
+        GEO_IPIFY_API_KEY: #@ data.values.geo_ipify_api_key
+        IPINFO_API_KEY: #@ data.values.ipinfo_api_key
+        IPAPI_API_KEY: #@ data.values.ipapi_api_key
+        PROXYCHECK_API_KEY: #@ data.values.proxycheck_api_key
+        MIN_BUILD_FREE_GB: 30
+  - task: upload-to-gcs
+    config:
+      platform: linux
+      image_resource: #@ task_image_config()
+      inputs:
+      - name: repo
+      - name: artifacts
+      - name: pipeline-tasks
+      - name: testflight-version
+      run:
+        path: pipeline-tasks/ci/tasks/upload-to-gcs.sh
+      params:
+        VERSION_FILE: testflight-version/version
+        GCS_DIRECTORY: prod
+        bucket: #@ data.values.build_artifacts_bucket_name
+        json_key: #@ data.values.build_artifacts_bucket_creds
+  - put: build-number-android
+    params:
+      repository: build-number-android
+      rebase: true
+  - put: build-number-ios
+    params:
+      repository: build-number-ios
+      rebase: true
+
+- name: build-pipeline-image
+  serial: true
+  plan:
+  - get: pipeline-image-def
+    trigger: true
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: gcr.io/kaniko-project/executor
+          tag: debug
+      inputs:
+      - name: pipeline-image-def
+      outputs:
+      - name: image
+      run:
+        path: /kaniko/executor
+        args:
+        - --context=pipeline-image-def/ci/image
+        - --use-new-run
+        - --single-snapshot
+        - --cache=false
+        - --no-push
+        - --tar-path=image/image.tar
+  - put: pipeline-image
+    params:
+      image: image/image.tar
+
+resources:
+- name: repo
+  type: git
+  webhook_token: ((webhook.secret))
+  source:
+    ignore_paths:
+    - "ci/*"
+    - ".github/*"
+    - "docs/*"
+    - "README.md"
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_branch
+    private_key: #@ data.values.github_private_key
+
+- name: pipeline-tasks
+  type: git
+  source:
+    paths: [ "ci/*" ]
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.pipeline_git_branch
+    private_key: #@ data.values.github_private_key
+
+- name: deps
+  type: git
+  webhook_token: ((webhook.secret))
+  source:
+    paths: [ yarn.lock ]
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_branch
+    private_key: #@ data.values.github_private_key
+
+- name: bundled-deps
+  type: gcs-resource
+  source:
+    bucket: #@ data.values.artifacts_bucket_name
+    json_key: #@ data.values.staging_inception_creds
+    regexp: galoy-mobile-artifacts/deps/bundled-deps-v(.*)-.*.tgz
+
+- name: built-dev-apk
+  type: gcs-resource
+  source:
+    bucket: #@ data.values.build_artifacts_bucket_name
+    json_key: #@ data.values.build_artifacts_bucket_creds
+    regexp: galoy-mobile/dev/android/galoy-mobile-(.+)-v.+/apk/release/app-universal-release.apk
+
+- name: built-dev-ipa
+  type: gcs-resource
+  source:
+    bucket: #@ data.values.build_artifacts_bucket_name
+    json_key: #@ data.values.build_artifacts_bucket_creds
+    regexp: galoy-mobile/dev/ios/galoy-mobile-(.+)-v.+/Blink.ipa
+
+- name: deps-version
+  type: semver
+  source:
+    initial_version: 0.1.0
+    driver: gcs
+    bucket: #@ data.values.artifacts_bucket_name
+    key: galoy-mobile-artifacts/versions/deps
+    json_key: #@ data.values.staging_inception_creds
+
+- name: pipeline-image
+  type: registry-image
+  source:
+    tag: latest
+    username: #@ data.values.docker_registry_user
+    password: #@ data.values.docker_registry_password
+    repository: #@ pipeline_image()
+
+- name: pipeline-image-def
+  type: git
+  source:
+    paths: [ci/image/Dockerfile]
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.pipeline_git_branch
+    private_key: #@ data.values.github_private_key
+
+- name: daily
+  type: time
+  source:
+    day_of_week: 1-6
+    start: 6:00 AM
+    stop: 6:00 AM
+    location: UTC
+
+- name: gh-prerelease
+  type: github-release
+  source:
+    owner: #@ data.values.gh_org
+    repository: #@ data.values.gh_repository
+    access_token: #@ data.values.github_api_token
+    release: false
+    pre_release: true
+
+- name: testflight-version
+  type: semver
+  source:
+    initial_version: 0.0.1
+    driver: git
+    file: testflight-version
+    git_user: blinkbitcoinbot <202112752+blinkbitcoinbot@users.noreply.github.com>
+    commit_message: "release(testflight): v%version%"
+    uri: #@ data.values.git_mobile_deployments_uri
+    branch: #@ data.values.git_version_branch
+    private_key: #@ data.values.github_private_key
+
+- name: build-number-android
+  type: git
+  source:
+    paths: [ "android", "android-builds" ]
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_build_number_branch
+    private_key: #@ data.values.github_private_key
+
+- name: build-number-ios
+  type: git
+  source:
+    paths: [ "ios", "ios-builds" ]
+    uri: #@ data.values.git_uri
+    branch: #@ data.values.git_build_number_branch
+    private_key: #@ data.values.github_private_key
+
+- name: mobile-concourse-lock
+  type: pool
+  source:
+    uri: #@ data.values.concourse_locks_git_uri
+    branch: main
+    pool: mobile-concourse
+    private_key: #@ data.values.github_private_key
+
+resource_types:
+- name: gcs-resource
+  type: docker-image
+  source:
+    repository: frodenas/gcs-resource

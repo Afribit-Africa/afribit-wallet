@@ -1,7 +1,0 @@
-mutation merchantMapDelete($input: MerchantMapDeleteInput!) {
-  merchantMapDelete(input: $input) {
-    errors {
-      message
-    }
-  }
-}

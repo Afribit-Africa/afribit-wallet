@@ -1,0 +1,19 @@
+name: "Test"
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  check-code:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+      - run: yarn install
+      # Flake handling happens at test granularity now: jest retries individual
+      # failing tests in CI (see jest.setup-after-env.ts) and logs each retried
+      # error, instead of silently re-running the whole job.
+      - run: yarn test
+        timeout-minutes: 20

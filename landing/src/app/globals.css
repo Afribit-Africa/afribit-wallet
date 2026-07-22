@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---------- brand constants + semantic tokens ----------
+   Light is the calm everyday mode, dark is the showcase mode
+   (Hyperspeed lives there). Sections that are dark by design
+   (custody, footer, phone screens) use brand constants directly. */
+
+:root {
+  --t-bg: #f7f5f2;
+  --t-fg: #171713;
+  --t-card: #fdfcfb;
+  --t-card2: #efece7;
+  --t-line: rgba(23, 23, 19, 0.11);
+  --t-muted: rgba(23, 23, 19, 0.62);
+  --t-faint: rgba(23, 23, 19, 0.38);
+}
+
+:root[data-theme="dark"] {
+  --t-bg: #0e0d0b;
+  --t-fg: #f7f5f2;
+  --t-card: #171613;
+  --t-card2: #1e1d19;
+  --t-line: rgba(247, 245, 242, 0.13);
+  --t-muted: rgba(247, 245, 242, 0.64);
+  --t-faint: rgba(247, 245, 242, 0.38);
+}
+
+@theme inline {
+  --color-bg: var(--t-bg);
+  --color-fg: var(--t-fg);
+  --color-card: var(--t-card);
+  --color-card2: var(--t-card2);
+  --color-line: var(--t-line);
+  --color-muted: var(--t-muted);
+  --color-faint: var(--t-faint);
+
+  --color-ivory: #f7f5f2;
+  --color-ink: #171713;
+  --color-orange: #ee901c;
+  --color-copper: #c97932;
+  --color-stone: #a8a39a;
+  --color-charcoal: #1e1f22;
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "Cascadia Mono", monospace;
+}
+
+::selection {
+  background: #ee901c;
+  color: #171713;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--t-bg);
+  color: var(--t-fg);
+  transition: background-color 0.45s ease, color 0.45s ease;
+}
+
+/* marquee strip */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* hairline rules that echo the moodboard grid */
+.rule {
+  background: var(--t-line);
+}
+.rule-light {
+  background: rgba(247, 245, 242, 0.18);
+}
+
+/* anime.js unwind targets start hidden only when js is running,
+   so the page stays readable with scripts off */
+.js [data-uw] {
+  opacity: 0;
+}
+
+/* splitText measurement helper: keep split lines from wrapping oddly */
+[data-split] .split-char {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* scanner sweep inside the phone */
+@keyframes scanline {
+  0% {
+    top: 8%;
+  }
+  50% {
+    top: 88%;
+  }
+  100% {
+    top: 8%;
+  }
+}
+.animate-scanline {
+  animation: scanline 2.6s ease-in-out infinite;
+}
+
+/* soft pulse for the primary scan action */
+@keyframes softpulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(238, 144, 28, 0.45);
+  }
+  55% {
+    box-shadow: 0 0 0 14px rgba(238, 144, 28, 0);
+  }
+}
+.animate-softpulse {
+  animation: softpulse 2.2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-scanline,
+  .animate-softpulse {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* nav link underline grows on hover */
+.nav-link:hover .nav-underline {
+  transform: scaleX(1);
+}
+
+/* the hero watermark needs to glow softly instead of darken in dark mode */
+:root[data-theme="dark"] .dark-mark {
+  filter: invert(1);
+  opacity: 0.04;
+}
+
+/* tour caption swap-in */
+@keyframes capIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.tour-caption {
+  animation: capIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* demo-mode micro-interactions inside tour screens */
+@keyframes holdfill {
+  0%, 12% { width: 0; }
+  70%, 100% { width: 100%; }
+}
+.demo-holdfill {
+  animation: holdfill 2.6s ease-in-out infinite;
+}
+@keyframes qrpulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
+.demo-qrpulse {
+  animation: qrpulse 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-caption,
+  .demo-holdfill,
+  .demo-qrpulse {
+    animation: none;
+  }
+}

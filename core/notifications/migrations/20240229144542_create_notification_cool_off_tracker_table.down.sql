@@ -1,1 +1,0 @@
-DROP TABLE notification_cool_off_tracker;

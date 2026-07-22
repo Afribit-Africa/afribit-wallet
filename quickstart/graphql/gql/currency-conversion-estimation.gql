@@ -1,8 +1,0 @@
-query CurrencyConversionEstimation($amount: Float!, $currency: DisplayCurrency!) {
-  currencyConversionEstimation(amount: $amount, currency: $currency) {
-    btcSatAmount
-    id
-    timestamp
-    usdCentAmount
-  }
-}

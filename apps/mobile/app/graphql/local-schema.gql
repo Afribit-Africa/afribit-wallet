@@ -1,0 +1,42 @@
+extend type Contact {
+  prettyName: String!
+}
+
+extend type Query {
+  hideBalance: Boolean!
+  hiddenBalanceToolTip: Boolean!
+  price: String # FIXME test only?
+  beta: Boolean!
+  countryCode: String!
+  region: Region
+  feedbackModalShown: Boolean!
+  introducingCirclesModalShown: Boolean!
+  innerCircleValue: Int!
+  upgradeModalLastShownAt: String
+  deviceSessionCount: Int!
+  preferredAmountCurrency: String
+  txLastSeen(accountId: ID!): TxLastSeen!
+}
+
+type TxLastSeen {
+  accountId: ID!
+  btcId: String!
+  usdId: String!
+}
+
+extend type Region {
+  latitude: Float!
+  longitude: Float!
+  latitudeDelta: Float!
+  longitudeDelta: Float!
+}
+
+extend type Account {
+  usdWallet: UsdWallet
+  btcWallet: BTCWallet
+}
+
+extend type ConsumerAccount {
+  usdWallet: UsdWallet
+  btcWallet: BTCWallet
+}

@@ -1,9 +1,0 @@
-query filteredUserCount(
-  $userIdsFilter: [ID!]
-  $phoneCountryCodesFilter: [CountryCode!]
-) {
-  filteredUserCount(
-    userIdsFilter: $userIdsFilter
-    phoneCountryCodesFilter: $phoneCountryCodesFilter
-  )
-}

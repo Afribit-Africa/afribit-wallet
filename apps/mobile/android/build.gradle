@@ -1,0 +1,51 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+import org.apache.tools.ant.taskdefs.condition.Os
+buildscript {
+    ext {
+        buildToolsVersion = "35.0.0"
+        minSdkVersion = 26
+        compileSdkVersion = 36
+        targetSdkVersion = 35
+        ndkVersion = "27.3.13750724"
+        kotlinVersion = "2.0.21"
+
+        androidXAnnotation = "1.8.2"
+        androidXBrowser = "1.8.0"
+    }
+    subprojects { subproject ->
+        afterEvaluate{
+            if((subproject.plugins.hasPlugin('android') || subproject.plugins.hasPlugin('android-library'))) {
+                android {
+                    compileSdkVersion rootProject.ext.compileSdkVersion
+                    buildToolsVersion rootProject.ext.buildToolsVersion
+                }
+            }
+        }
+    }
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://www.jitpack.io' }
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+
+        classpath 'com.google.gms:google-services:4.4.3' // firebase
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.6'
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+     }
+ }
+
+ allprojects {
+     repositories {
+         google()
+         mavenCentral()
+         maven {
+             url "$rootDir/../node_modules/detox/Detox-android"
+         }
+    }
+}
+
+apply plugin: "com.facebook.react.rootproject"

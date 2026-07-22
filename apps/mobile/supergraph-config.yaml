@@ -1,0 +1,14 @@
+federation_version: =2.3.2
+subgraphs:
+  blink:
+    routing_url: url
+    schema:
+      file: ../blink/dev/config/apollo-federation/supergraph.graphql
+  circles:
+    routing_url: url
+    schema:
+      file: ../blink-circles/src/graphql/schema.graphql
+  kyc:
+    routing_url: url
+    schema:
+      file: ../blink-kyc/app/graphql/schema.graphql

@@ -1,5 +1,0 @@
-mutation supportChatReset {
-  supportChatReset {
-    success
-  }
-}

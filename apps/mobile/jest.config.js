@@ -1,0 +1,74 @@
+module.exports = {
+  preset: "@react-native/jest-preset",
+  setupFiles: [
+    "./node_modules/@react-native/jest-preset/jest/setup.js",
+    "./node_modules/react-native-gesture-handler/jestSetup.js",
+  ],
+  setupFilesAfterEnv: [
+    "@testing-library/jest-native/extend-expect",
+    "<rootDir>/jest.setup.js",
+    "<rootDir>/jest.setup-after-env.ts",
+  ],
+  // Stopgap against CPU-starved CI runners pushing borderline tests past the
+  // 5s default (issue #3815). Genuine hangs are fixed at the source; this only
+  // absorbs slow-runner tails without letting real hangs sit for a minute.
+  testTimeout: 20000,
+  transform: {
+    "\\.(ts|tsx)$": [
+      "ts-jest",
+      {
+        compiler: "ttsc",
+        tsconfig: "<rootDir>/tsconfig.jest.json",
+      },
+    ],
+    "\\.js$": "babel-jest",
+    "^.+\\.svg$": "jest-transform-stub",
+  },
+  testRegex: "(/__tests__/.*\\.(test|spec))\\.(ts|tsx|js)$",
+  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
+  rootDir: ".",
+  resolver: "./node_modules/react-native-worklets/jest/resolver.js",
+  moduleNameMapper: {
+    "^@app/(.*)$": ["<rootDir>app/$1"],
+    "^@mocks/(.*)$": ["<rootDir>__mocks__/$1"],
+  },
+  transformIgnorePatterns: [
+    "node_modules/(?!(react-native" +
+      "|@react-native-community" +
+      "|@react-native-firebase" +
+      "|@react-native-firebase/auth" +
+      "|@react-native" +
+      "|@react-navigation" +
+      "|react-native-animatable" +
+      "|react-native-secure-key-store" +
+      "|react-native-country-picker-modal" +
+      "|react-native-error-boundary" +
+      "|react-native-extended-stylesheet" +
+      "|react-native-haptic-feedback" +
+      "|react-native-keyboard-aware-scroll-view" +
+      "|react-native-modal" +
+      "|react-native-phone-number-input" +
+      "|react-native-ratings" +
+      "|react-native-reanimated" +
+      "|react-native-worklets" +
+      "|react-native-linear-gradient" +
+      "|react-native-root-siblings" +
+      "|react-native-screens" +
+      "|react-native-size-matters" +
+      "|react-native-splash-screen" +
+      "|react-native-toast-message" +
+      "|react-native-vector-icons" +
+      "|react-navigation-tabs" +
+      "|@rn-vui" +
+      "|rn-qr-generator" +
+      "|react-native-image-crop-picker" +
+      "|react-native-currency-picker" +
+      "|react-native-status-bar-height" +
+      "|react-native-auto-height-image" +
+      "|react-native-nfc-manager" +
+      "|uuid" +
+      "|@formatjs" +
+      "|react-native-inappbrowser-reborn" +
+      ")/)",
+  ],
+}

@@ -1,7 +1,0 @@
-query defaultAccount {
-  me {
-    defaultAccount {
-      id
-    }
-  }
-}

@@ -1,0 +1,22 @@
+{
+  "extends": "@react-native/typescript-config/tsconfig.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "allowJs": false,
+    "sourceMap": true,
+    "baseUrl": "./",
+    "paths": {
+      "@app/*": ["app/*"]
+    },
+    "types": [
+      "node",
+      "react-native",
+      "@wdio/globals/types",
+      "@wdio/mocha-framework",
+      "@wdio/devtools-service",
+      "@types/jest"
+    ]
+  },
+  "exclude": ["**/*.stories.tsx"],
+  "include": ["app", "e2e", "__tests__", ".storybook"]
+}

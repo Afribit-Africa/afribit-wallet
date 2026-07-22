@@ -1,0 +1,10 @@
+node_modules
+ios
+android
+.vscode
+ignite/ignite.json
+package.json
+__generated__
+app/components/price-graph/data-tst.ts
+.yalc
+app/i18n/**/*

@@ -1,0 +1,266 @@
+import { NavigatorScreenParams } from "@react-navigation/native"
+
+export const PhraseStep = { First: 1, Second: 2 } as const
+export type PhraseStep = (typeof PhraseStep)[keyof typeof PhraseStep]
+import { LNURLPaySuccessAction } from "lnurl-pay"
+
+import { IconNamesType } from "@app/components/atomic/galoy-icon"
+import { PhoneCodeChannelType, UserContact, WalletCurrency } from "@app/graphql/generated"
+import { EarnSectionType } from "@app/screens/earns-screen/sections"
+import { PhoneLoginInitiateType } from "@app/screens/phone-auth-screen"
+import {
+  PaymentDestination,
+  ReceiveDestination,
+} from "@app/screens/send-bitcoin-screen/payment-destination/index.types"
+import { PaymentDetail } from "@app/screens/send-bitcoin-screen/payment-details/index.types"
+import { PaymentSendCompletedStatus } from "@app/screens/send-bitcoin-screen/use-send-payment"
+import { AccountTypeMode } from "@app/types/account"
+import { DisplayCurrency, MoneyAmount, WalletOrDisplayCurrency } from "@app/types/amounts"
+import { WalletDescriptor } from "@app/types/wallets"
+
+import { AuthenticationScreenPurpose, PinScreenPurpose } from "../utils/enum"
+
+export type RootStackParamList = {
+  getStarted: undefined
+  accountTypeSelection: { mode: AccountTypeMode }
+  unsupportedRegion: undefined
+  selfCustodialWalletCreation: undefined
+  liteDeviceAccount: {
+    appCheckToken: string
+  }
+  developerScreen: undefined
+  login: {
+    type: PhoneLoginInitiateType
+    title?: string
+    onboarding?: boolean
+  }
+  /** `isResume` marks the lock raised on returning from background: unlocking pops back to
+   *  the screen the user was on, instead of resetting to Primary the way a cold start does. */
+  authenticationCheck: { isResume?: boolean } | undefined
+  authentication: {
+    screenPurpose: AuthenticationScreenPurpose
+    isPinEnabled: boolean
+    isResume?: boolean
+  }
+  pin: { screenPurpose: PinScreenPurpose; isResume?: boolean }
+  Primary: undefined
+  earnsSection: { section: EarnSectionType; isAvailable: boolean }
+  earnsQuiz: { id: string; isAvailable: boolean }
+  scanningQRCode: undefined
+  settings: undefined
+  addressScreen: undefined
+  defaultWallet: undefined
+  theme: undefined
+  sendBitcoinDestination?: {
+    payment?: string
+    username?: string
+    scanPressed?: number
+  }
+  sendBitcoinDetails: {
+    paymentDestination: PaymentDestination
+  }
+  sendBitcoinConfirmation: {
+    paymentDetail: PaymentDetail<WalletCurrency>
+  }
+  conversionDetails: undefined
+  conversionConfirmation: {
+    fromWalletCurrency: WalletCurrency
+    moneyAmount: MoneyAmount<WalletOrDisplayCurrency>
+  }
+  conversionSuccess: undefined
+  sendBitcoinCompleted: {
+    arrivalAtMempoolEstimate?: number
+    status: PaymentSendCompletedStatus
+    successAction?: LNURLPaySuccessAction
+    preimage?: string
+    note?: string
+    currencyAmount?: string
+    satAmount?: string
+    currencyFeeAmount?: string
+    satFeeAmount?: string
+    destination?: string
+    paymentType?: string
+    createdAt?: number
+  }
+  setLightningAddress: { onboarding?: boolean }
+  language: undefined
+  currency: undefined
+  security: {
+    mIsBiometricsEnabled: boolean
+    mIsPinEnabled: boolean
+  }
+  lnurl: { username: string }
+  sectionCompleted: { amount: number; sectionTitle: string; isAvailable: boolean }
+  priceHistory: undefined
+  receiveBitcoin: undefined
+  redeemBitcoinDetail: {
+    receiveDestination: ReceiveDestination
+  }
+  redeemBitcoinResult: {
+    callback: string
+    domain: string
+    k1: string
+    defaultDescription: string
+    minWithdrawableSatoshis: MoneyAmount<typeof WalletCurrency.Btc>
+    maxWithdrawableSatoshis: MoneyAmount<typeof WalletCurrency.Btc>
+    receivingWalletDescriptor?: WalletDescriptor<typeof WalletCurrency.Btc>
+    unitOfAccountAmount: MoneyAmount<WalletOrDisplayCurrency>
+    settlementAmount: MoneyAmount<typeof WalletCurrency.Btc>
+    displayAmount: MoneyAmount<DisplayCurrency>
+  }
+  phoneFlow: NavigatorScreenParams<PhoneValidationStackParamList>
+  phoneRegistrationInitiate: undefined
+  phoneRegistrationValidate: { phone: string; channel: PhoneCodeChannelType }
+  transactionDetail: { txid: string }
+  unclaimedDepositsScreen: undefined
+  transactionHistory?: {
+    wallets?: ReadonlyArray<{
+      readonly id: string
+      readonly walletCurrency: WalletCurrency
+    }>
+    currencyFilter?: WalletCurrency
+    showLoading?: boolean
+  }
+  Earn: undefined
+  accountScreen: undefined
+  profileScreen: undefined
+  notificationSettingsScreen: undefined
+  apiScreen: undefined
+  transactionLimitsScreen: undefined
+  acceptTermsAndConditions: NewAccountFlowParamsList
+  emailRegistrationInitiate?: { onboarding?: boolean; hasUsername?: boolean }
+  emailRegistrationValidate: {
+    email: string
+    emailRegistrationId: string
+    onboarding?: boolean
+    hasUsername?: boolean
+  }
+  emailLoginInitiate: undefined
+  emailLoginValidate: { email: string; emailLoginId: string }
+  totpRegistrationInitiate: undefined
+  totpRegistrationValidate: { totpRegistrationId: string }
+  totpLoginValidate: { authToken: string }
+  webView: { url: string; initialTitle?: string; headerTitle?: string }
+  fullOnboardingFlow: undefined
+  notificationHistory: undefined
+  onboarding: NavigatorScreenParams<OnboardingStackParamList>
+  cardDashboardScreen: undefined
+  cardAddToMobileWalletScreen: {
+    lastFour: string
+    holderName: string
+  }
+  cardDetailsScreen: undefined
+  cardLimitsScreen: undefined
+  cardPersonalDetailsScreen: undefined
+  cardSettingsScreen: undefined
+  cardStatementsScreen: undefined
+  cardTransactionDetailsScreen: { transactionId: string }
+  cardStatusScreen: {
+    title: string
+    subtitle: string
+    buttonLabel: string
+    navigateTo: keyof RootStackParamList
+    iconName: IconNamesType
+    iconColor?: string
+    showCard?: boolean
+    showAddToWallet?: boolean
+    lastFour?: string
+    holderName?: string
+  }
+  cardShippingAddressScreen: undefined
+  cardCreatePinScreen: undefined
+  cardChangePinScreen: undefined
+  orderCardScreen: undefined
+  replaceCardScreen: { cardId: string }
+  selectionScreen: {
+    title: string
+    options: Array<{ value: string; label: string }>
+    selectedValue: string
+    onSelect: (value: string) => void
+  }
+  cardOnboardingIntroducingScreen: undefined
+  cardOnboardingDetailsScreen: undefined
+  cardOnboardingWelcomeScreen: undefined
+  cardOnboardingSubscribeScreen: undefined
+  cardOnboardingPaymentScreen: undefined
+  cardOnboardingLoadingScreen: undefined
+  cardOnboardingPersonalInfoScreen: undefined
+  cardOnboardingPreapprovedScreen: undefined
+  cardOnboardingProcessingScreen: undefined
+  cardOnboardingApprovedScreen: undefined
+  selfCustodialBackupMethod: undefined
+  selfCustodialCloudBackup: undefined
+  selfCustodialBackupSecurityChecks: undefined
+  selfCustodialBackupPhrase: { step: PhraseStep }
+  selfCustodialViewBackupSecurityChecks: undefined
+  selfCustodialViewBackupPhrase: undefined
+  selfCustodialBackupPhraseConfirm: {
+    challenges: Array<{ index: number; word: string }>
+    successMessage?: string
+  }
+  selfCustodialBackupSuccess: { reBackup?: boolean; message?: string } | undefined
+  accountMigrationEntry: undefined
+  accountMigrationStart: undefined
+  accountMigrationExplainer: undefined
+  accountMigrationKeepReceiving: undefined
+  accountMigrationDownloadHistory: undefined
+  accountMigrationBalancesOverview: undefined
+  accountMigrationTransferringFunds: undefined
+  accountMigrationContactSupport: undefined
+  selfCustodialRestorePhrase: { step: PhraseStep; words?: string[] }
+  selfCustodialRestoreMethod: undefined
+  selfCustodialCloudRestore: undefined
+  stableBalanceSettings: undefined
+}
+
+export type OnboardingStackParamList = {
+  welcomeLevel1: { onboarding?: boolean }
+  emailBenefits: { onboarding?: boolean; hasUsername?: boolean }
+  lightningBenefits: { onboarding?: boolean; canGoBack?: boolean }
+  supportScreen?: { canGoBack?: boolean }
+}
+
+export type PeopleStackParamList = {
+  peopleHome: undefined
+  contactDetail: { contact: UserContact }
+  circlesDashboard: undefined
+  allContacts: undefined
+}
+
+export type PhoneValidationStackParamList = {
+  Primary: undefined
+  phoneLoginInitiate: {
+    type: PhoneLoginInitiateType
+    channel: PhoneCodeChannelType
+    title?: string
+    onboarding?: boolean
+  }
+  telegramLoginValidate: {
+    phone: string
+    type: PhoneLoginInitiateType
+    onboarding?: boolean
+  }
+  phoneLoginValidate: {
+    phone: string
+    channel: PhoneCodeChannelType
+    type: PhoneLoginInitiateType
+    onboarding?: boolean
+  }
+  authentication: {
+    screenPurpose: AuthenticationScreenPurpose
+  }
+  Home: undefined
+  totpLoginValidate: { authToken: string }
+}
+
+export type PrimaryStackParamList = {
+  Home: undefined
+  People: undefined
+  Map: undefined
+  Earn: undefined
+  Web: undefined
+}
+
+export type NewAccountFlowParamsList = {
+  flow: "phone" | "trial" | "selfCustodial" | "migration"
+}

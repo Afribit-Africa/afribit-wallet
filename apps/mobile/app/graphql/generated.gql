@@ -1,0 +1,1946 @@
+fragment CardTransactionDetails on CardTransaction {
+  id
+  amount
+  currency
+  merchantName
+  status
+  createdAt
+  __typename
+}
+
+fragment Transaction on Transaction {
+  __typename
+  id
+  status
+  direction
+  memo
+  createdAt
+  settlementAmount
+  settlementFee
+  settlementDisplayFee
+  settlementCurrency
+  settlementDisplayAmount
+  settlementDisplayCurrency
+  settlementPrice {
+    base
+    offset
+    currencyUnit
+    formattedAmount
+    __typename
+  }
+  initiationVia {
+    ... on InitiationViaIntraLedger {
+      counterPartyWalletId
+      counterPartyUsername
+      __typename
+    }
+    ... on InitiationViaLn {
+      paymentHash
+      paymentRequest
+      __typename
+    }
+    ... on InitiationViaOnChain {
+      address
+      __typename
+    }
+    __typename
+  }
+  settlementVia {
+    ... on SettlementViaIntraLedger {
+      counterPartyWalletId
+      counterPartyUsername
+      preImage
+      __typename
+    }
+    ... on SettlementViaLn {
+      preImage
+      __typename
+    }
+    ... on SettlementViaOnChain {
+      transactionHash
+      arrivalInMempoolEstimatedAt
+      __typename
+    }
+    __typename
+  }
+}
+
+fragment TransactionList on TransactionConnection {
+  pageInfo {
+    hasNextPage
+    hasPreviousPage
+    startCursor
+    endCursor
+    __typename
+  }
+  edges {
+    cursor
+    node {
+      ...Transaction
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+mutation StatefulNotificationAcknowledge($input: StatefulNotificationAcknowledgeInput!) {
+  statefulNotificationAcknowledge(input: $input) {
+    notification {
+      acknowledgedAt
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation accountDelete {
+  accountDelete {
+    errors {
+      message
+      __typename
+    }
+    success
+    __typename
+  }
+}
+
+mutation accountDisableNotificationCategory($input: AccountDisableNotificationCategoryInput!) {
+  accountDisableNotificationCategory(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    account {
+      id
+      notificationSettings {
+        push {
+          enabled
+          disabledCategories
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation accountDisableNotificationChannel($input: AccountDisableNotificationChannelInput!) {
+  accountDisableNotificationChannel(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    account {
+      id
+      notificationSettings {
+        push {
+          enabled
+          disabledCategories
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation accountEnableNotificationCategory($input: AccountEnableNotificationCategoryInput!) {
+  accountEnableNotificationCategory(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    account {
+      id
+      notificationSettings {
+        push {
+          enabled
+          disabledCategories
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation accountEnableNotificationChannel($input: AccountEnableNotificationChannelInput!) {
+  accountEnableNotificationChannel(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    account {
+      id
+      notificationSettings {
+        push {
+          enabled
+          disabledCategories
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation accountUpdateDefaultWalletId($input: AccountUpdateDefaultWalletIdInput!) {
+  accountUpdateDefaultWalletId(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    account {
+      id
+      defaultWalletId
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation accountUpdateDisplayCurrency($input: AccountUpdateDisplayCurrencyInput!) {
+  accountUpdateDisplayCurrency(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    account {
+      id
+      displayCurrency
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation captchaCreateChallenge {
+  captchaCreateChallenge {
+    errors {
+      message
+      __typename
+    }
+    result {
+      id
+      challengeCode
+      newCaptcha
+      failbackMode
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation captchaRequestAuthCode($input: CaptchaRequestAuthCodeInput!) {
+  captchaRequestAuthCode(input: $input) {
+    errors {
+      message
+      code
+      __typename
+    }
+    success
+    __typename
+  }
+}
+
+mutation cardCreate($input: CardCreateInput!) {
+  cardCreate(input: $input) {
+    id
+    lastFour
+    cardType
+    status
+    __typename
+  }
+}
+
+mutation cardPinUpdate($input: CardPinUpdateInput!) {
+  cardPinUpdate(input: $input)
+}
+
+mutation cardReplace($input: CardReplaceInput!) {
+  cardReplace(input: $input) {
+    id
+    lastFour
+    cardType
+    status
+    __typename
+  }
+}
+
+mutation cardUpdate($input: CardUpdateInput!) {
+  cardUpdate(input: $input) {
+    id
+    status
+    __typename
+  }
+}
+
+mutation cardUpdateLimits($input: CardUpdateInput!) {
+  cardUpdate(input: $input) {
+    id
+    dailyLimitCents
+    monthlyLimitCents
+    __typename
+  }
+}
+
+mutation contactCreate($input: ContactCreateInput!) {
+  contactCreate(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    contact {
+      id
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation deviceNotificationTokenCreate($input: DeviceNotificationTokenCreateInput!) {
+  deviceNotificationTokenCreate(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    success
+    __typename
+  }
+}
+
+mutation feedbackSubmit($input: FeedbackSubmitInput!) {
+  feedbackSubmit(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    success
+    __typename
+  }
+}
+
+mutation intraLedgerPaymentSend($input: IntraLedgerPaymentSendInput!) {
+  intraLedgerPaymentSend(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    status
+    transaction {
+      createdAt
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation intraLedgerUsdPaymentSend($input: IntraLedgerUsdPaymentSendInput!) {
+  intraLedgerUsdPaymentSend(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    status
+    transaction {
+      createdAt
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation kycFlowStart($input: KycFlowStartInput!) {
+  kycFlowStart(input: $input) {
+    workflowRunId
+    tokenWeb
+    __typename
+  }
+}
+
+mutation lnInvoiceCreate($input: LnInvoiceCreateInput!) {
+  lnInvoiceCreate(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    invoice {
+      createdAt
+      paymentHash
+      paymentRequest
+      paymentStatus
+      externalId
+      satoshis
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation lnInvoiceFeeProbe($input: LnInvoiceFeeProbeInput!) {
+  lnInvoiceFeeProbe(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    amount
+    __typename
+  }
+}
+
+mutation lnInvoicePaymentSend($input: LnInvoicePaymentInput!) {
+  lnInvoicePaymentSend(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    status
+    transaction {
+      createdAt
+      settlementVia {
+        ... on SettlementViaLn {
+          preImage
+          __typename
+        }
+        ... on SettlementViaIntraLedger {
+          preImage
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation lnNoAmountInvoiceCreate($input: LnNoAmountInvoiceCreateInput!) {
+  lnNoAmountInvoiceCreate(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    invoice {
+      createdAt
+      paymentHash
+      paymentRequest
+      paymentStatus
+      externalId
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation lnNoAmountInvoiceFeeProbe($input: LnNoAmountInvoiceFeeProbeInput!) {
+  lnNoAmountInvoiceFeeProbe(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    amount
+    __typename
+  }
+}
+
+mutation lnNoAmountInvoicePaymentSend($input: LnNoAmountInvoicePaymentInput!) {
+  lnNoAmountInvoicePaymentSend(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    status
+    transaction {
+      createdAt
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation lnNoAmountUsdInvoiceFeeProbe($input: LnNoAmountUsdInvoiceFeeProbeInput!) {
+  lnNoAmountUsdInvoiceFeeProbe(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    amount
+    __typename
+  }
+}
+
+mutation lnNoAmountUsdInvoicePaymentSend($input: LnNoAmountUsdInvoicePaymentInput!) {
+  lnNoAmountUsdInvoicePaymentSend(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    status
+    transaction {
+      createdAt
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation lnUsdInvoiceCreate($input: LnUsdInvoiceCreateInput!) {
+  lnUsdInvoiceCreate(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    invoice {
+      createdAt
+      paymentHash
+      paymentRequest
+      paymentStatus
+      externalId
+      satoshis
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation lnUsdInvoiceFeeProbe($input: LnUsdInvoiceFeeProbeInput!) {
+  lnUsdInvoiceFeeProbe(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    amount
+    __typename
+  }
+}
+
+mutation onChainAddressCurrent($input: OnChainAddressCurrentInput!) {
+  onChainAddressCurrent(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    address
+    __typename
+  }
+}
+
+mutation onChainPaymentSend($input: OnChainPaymentSendInput!) {
+  onChainPaymentSend(input: $input) {
+    transaction {
+      createdAt
+      settlementVia {
+        ... on SettlementViaOnChain {
+          arrivalInMempoolEstimatedAt
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    errors {
+      message
+      __typename
+    }
+    status
+    __typename
+  }
+}
+
+mutation onChainPaymentSendAll($input: OnChainPaymentSendAllInput!) {
+  onChainPaymentSendAll(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    status
+    transaction {
+      createdAt
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation onChainUsdPaymentSend($input: OnChainUsdPaymentSendInput!) {
+  onChainUsdPaymentSend(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    status
+    transaction {
+      createdAt
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation onChainUsdPaymentSendAsBtcDenominated($input: OnChainUsdPaymentSendAsBtcDenominatedInput!) {
+  onChainUsdPaymentSendAsBtcDenominated(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    status
+    transaction {
+      createdAt
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation quizClaim($input: QuizClaimInput!) {
+  quizClaim(input: $input) {
+    errors {
+      message
+      code
+      __typename
+    }
+    quizzes {
+      id
+      amount
+      completed
+      notBefore
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation userContactUpdateAlias($input: UserContactUpdateAliasInput!) {
+  userContactUpdateAlias(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    contact {
+      alias
+      id
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation userEmailDelete {
+  userEmailDelete {
+    errors {
+      message
+      __typename
+    }
+    me {
+      id
+      phone
+      totpEnabled
+      email {
+        address
+        verified
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation userEmailRegistrationInitiate($input: UserEmailRegistrationInitiateInput!) {
+  userEmailRegistrationInitiate(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    emailRegistrationId
+    me {
+      id
+      email {
+        address
+        verified
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation userEmailRegistrationValidate($input: UserEmailRegistrationValidateInput!) {
+  userEmailRegistrationValidate(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    me {
+      id
+      email {
+        address
+        verified
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation userLogin($input: UserLoginInput!) {
+  userLogin(input: $input) {
+    errors {
+      message
+      code
+      __typename
+    }
+    authToken
+    totpRequired
+    __typename
+  }
+}
+
+mutation userLoginUpgrade($input: UserLoginUpgradeInput!) {
+  userLoginUpgrade(input: $input) {
+    errors {
+      message
+      code
+      __typename
+    }
+    success
+    authToken
+    __typename
+  }
+}
+
+mutation userLoginUpgradeTelegram($input: UserLoginUpgradeTelegramInput!) {
+  userLoginUpgradeTelegram(input: $input) {
+    errors {
+      message
+      code
+      __typename
+    }
+    success
+    __typename
+  }
+}
+
+mutation userLogout($input: UserLogoutInput!) {
+  userLogout(input: $input) {
+    success
+    __typename
+  }
+}
+
+mutation userPhoneDelete {
+  userPhoneDelete {
+    errors {
+      message
+      __typename
+    }
+    me {
+      id
+      phone
+      totpEnabled
+      email {
+        address
+        verified
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation userPhoneRegistrationInitiate($input: UserPhoneRegistrationInitiateInput!) {
+  userPhoneRegistrationInitiate(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    success
+    __typename
+  }
+}
+
+mutation userPhoneRegistrationValidate($input: UserPhoneRegistrationValidateInput!) {
+  userPhoneRegistrationValidate(input: $input) {
+    errors {
+      message
+      code
+      __typename
+    }
+    me {
+      id
+      phone
+      email {
+        address
+        verified
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation userTotpDelete {
+  userTotpDelete {
+    errors {
+      message
+      __typename
+    }
+    me {
+      id
+      phone
+      totpEnabled
+      email {
+        address
+        verified
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation userTotpRegistrationInitiate {
+  userTotpRegistrationInitiate {
+    errors {
+      message
+      __typename
+    }
+    totpRegistrationId
+    totpSecret
+    __typename
+  }
+}
+
+mutation userTotpRegistrationValidate($input: UserTotpRegistrationValidateInput!) {
+  userTotpRegistrationValidate(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    me {
+      id
+      totpEnabled
+      phone
+      email {
+        address
+        verified
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation userUpdateLanguage($input: UserUpdateLanguageInput!) {
+  userUpdateLanguage(input: $input) {
+    errors {
+      message
+      __typename
+    }
+    user {
+      id
+      language
+      __typename
+    }
+    __typename
+  }
+}
+
+mutation userUpdateUsername($input: UserUpdateUsernameInput!) {
+  userUpdateUsername(input: $input) {
+    errors {
+      code
+      __typename
+    }
+    user {
+      id
+      username
+      __typename
+    }
+    __typename
+  }
+}
+
+query Bulletins($first: Int!, $after: String) {
+  me {
+    id
+    unacknowledgedStatefulNotificationsWithBulletinEnabled(
+      first: $first
+      after: $after
+    ) {
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        __typename
+      }
+      edges {
+        node {
+          id
+          title
+          body
+          createdAt
+          acknowledgedAt
+          bulletinEnabled
+          icon
+          action {
+            ... on OpenDeepLinkAction {
+              deepLink
+              label
+              __typename
+            }
+            ... on OpenExternalLinkAction {
+              url
+              label
+              __typename
+            }
+            __typename
+          }
+          __typename
+        }
+        cursor
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query Circles {
+  me {
+    id
+    username
+    defaultAccount {
+      id
+      ... on ConsumerAccount {
+        welcomeProfile {
+          allTimePoints
+          allTimeRank
+          innerCircleAllTimeCount
+          innerCircleThisMonthCount
+          outerCircleAllTimeCount
+          outerCircleThisMonthCount
+          thisMonthPoints
+          thisMonthRank
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query ContactsCard {
+  me {
+    id
+    contacts {
+      id
+      handle
+      username
+      alias
+      transactionsCount
+      __typename
+    }
+    __typename
+  }
+}
+
+query ExportCsvSetting($walletIds: [WalletId!]!) {
+  me {
+    id
+    defaultAccount {
+      id
+      csvTransactions(walletIds: $walletIds)
+      __typename
+    }
+    __typename
+  }
+}
+
+query SettingsScreen {
+  me {
+    id
+    username
+    language
+    defaultAccount {
+      id
+      defaultWalletId
+      wallets {
+        id
+        balance
+        walletCurrency
+        __typename
+      }
+      __typename
+    }
+    totpEnabled
+    phone
+    email {
+      address
+      verified
+      __typename
+    }
+    __typename
+  }
+}
+
+query StatefulNotifications($after: String) {
+  me {
+    statefulNotificationsWithoutBulletinEnabled(first: 20, after: $after) {
+      nodes {
+        id
+        title
+        body
+        createdAt
+        acknowledgedAt
+        bulletinEnabled
+        icon
+        action {
+          ... on OpenDeepLinkAction {
+            deepLink
+            label
+            __typename
+          }
+          ... on OpenExternalLinkAction {
+            url
+            label
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query UnacknowledgedNotificationCount {
+  me {
+    id
+    unacknowledgedStatefulNotificationsWithoutBulletinEnabledCount
+    __typename
+  }
+}
+
+query accountDefaultWallet($walletCurrency: WalletCurrency, $username: Username!) {
+  accountDefaultWallet(walletCurrency: $walletCurrency, username: $username) {
+    id
+    __typename
+  }
+}
+
+query accountLimits {
+  me {
+    id
+    defaultAccount {
+      id
+      limits {
+        withdrawal {
+          totalLimit
+          remainingLimit
+          interval
+          __typename
+        }
+        internalSend {
+          totalLimit
+          remainingLimit
+          interval
+          __typename
+        }
+        convert {
+          totalLimit
+          remainingLimit
+          interval
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query addressScreen {
+  me {
+    id
+    username
+    __typename
+  }
+}
+
+query analytics {
+  me {
+    username
+    id
+    __typename
+  }
+  globals {
+    network
+    __typename
+  }
+}
+
+query btcPriceList($range: PriceGraphRange!) {
+  btcPriceList(range: $range) {
+    timestamp
+    price {
+      base
+      offset
+      currencyUnit
+      __typename
+    }
+    __typename
+  }
+}
+
+query businessMapMarkers {
+  businessMapMarkers {
+    username
+    mapInfo {
+      title
+      coordinates {
+        longitude
+        latitude
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query card {
+  me {
+    id
+    defaultAccount {
+      id
+      ... on ConsumerAccount {
+        cards {
+          id
+          lastFour
+          cardType
+          status
+          createdAt
+          dailyLimitCents
+          monthlyLimitCents
+          __typename
+        }
+        cardConsumerApplications {
+          id
+          applicationStatus
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query cardBalance($cardId: ID!) {
+  cardBalance(cardId: $cardId) {
+    available
+    pending
+    posted
+    __typename
+  }
+}
+
+query cardEncryptionPublicKey {
+  cardEncryptionPublicKey
+}
+
+query cardTransactionsPaginated($cardId: ID!, $first: Int!, $after: String) {
+  cardTransactionsPaginated(cardId: $cardId, first: $first, after: $after) {
+    edges {
+      cursor
+      node {
+        id
+        amount
+        currency
+        merchantName
+        status
+        createdAt
+        cardId
+        __typename
+      }
+      __typename
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      __typename
+    }
+    __typename
+  }
+}
+
+query contacts {
+  me {
+    id
+    contacts {
+      id
+      handle
+      username
+      alias
+      transactionsCount
+      __typename
+    }
+    __typename
+  }
+}
+
+query conversionScreen {
+  me {
+    id
+    defaultAccount {
+      id
+      wallets {
+        id
+        balance
+        walletCurrency
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query currencyList {
+  currencyList {
+    __typename
+    id
+    flag
+    name
+    symbol
+    fractionDigits
+  }
+}
+
+query debugScreen {
+  me {
+    id
+    defaultAccount {
+      id
+      __typename
+    }
+    __typename
+  }
+}
+
+query displayCurrency {
+  me {
+    id
+    defaultAccount {
+      id
+      displayCurrency
+      __typename
+    }
+    __typename
+  }
+}
+
+query fullOnboardingScreen {
+  me {
+    id
+    defaultAccount {
+      ... on ConsumerAccount {
+        id
+        onboardingStatus
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query getUsernames {
+  me {
+    id
+    phone
+    username
+    defaultAccount {
+      id
+      __typename
+    }
+    email {
+      address
+      __typename
+    }
+    __typename
+  }
+}
+
+query homeAuthed {
+  me {
+    id
+    language
+    username
+    phone
+    email {
+      address
+      verified
+      __typename
+    }
+    defaultAccount {
+      id
+      level
+      defaultWalletId
+      pendingIncomingTransactions {
+        ...Transaction
+        __typename
+      }
+      transactions(first: 20) {
+        ...TransactionList
+        __typename
+      }
+      wallets {
+        id
+        balance
+        walletCurrency
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query homeUnauthed {
+  globals {
+    network
+    __typename
+  }
+  currencyList {
+    id
+    flag
+    name
+    symbol
+    fractionDigits
+    __typename
+  }
+}
+
+query invite {
+  me {
+    id
+    username
+    __typename
+  }
+}
+
+query language {
+  me {
+    id
+    language
+    __typename
+  }
+}
+
+query level {
+  me {
+    id
+    defaultAccount {
+      id
+      level
+      __typename
+    }
+    __typename
+  }
+}
+
+query migrationApiKeys {
+  me {
+    id
+    apiKeys {
+      id
+      revoked
+      expired
+      __typename
+    }
+    __typename
+  }
+}
+
+query migrationOwner {
+  me {
+    id
+    defaultAccount {
+      id
+      __typename
+    }
+    __typename
+  }
+}
+
+query migrationSupportDetails {
+  me {
+    id
+    phone
+    username
+    email {
+      address
+      __typename
+    }
+    defaultAccount {
+      id
+      __typename
+    }
+    __typename
+  }
+}
+
+query migrationTransactionsPresence {
+  me {
+    id
+    defaultAccount {
+      id
+      transactions(first: 1) {
+        edges {
+          cursor
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query mobileUpdate {
+  mobileVersions {
+    platform
+    currentSupported
+    minSupported
+    __typename
+  }
+}
+
+query myQuizQuestions {
+  me {
+    id
+    defaultAccount {
+      id
+      ... on ConsumerAccount {
+        quiz {
+          id
+          amount
+          completed
+          notBefore
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query myUserId {
+  me {
+    id
+    __typename
+  }
+}
+
+query network {
+  globals {
+    network
+    __typename
+  }
+}
+
+query notificationSettings {
+  me {
+    id
+    defaultAccount {
+      id
+      notificationSettings {
+        push {
+          enabled
+          disabledCategories
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query onChainTxFee($walletId: WalletId!, $address: OnChainAddress!, $amount: SatAmount!) {
+  onChainTxFee(walletId: $walletId, address: $address, amount: $amount) {
+    amount
+    __typename
+  }
+}
+
+query onChainUsdTxFee($walletId: WalletId!, $address: OnChainAddress!, $amount: CentAmount!) {
+  onChainUsdTxFee(walletId: $walletId, address: $address, amount: $amount) {
+    amount
+    __typename
+  }
+}
+
+query onChainUsdTxFeeAsBtcDenominated($walletId: WalletId!, $address: OnChainAddress!, $amount: SatAmount!) {
+  onChainUsdTxFeeAsBtcDenominated(
+    walletId: $walletId
+    address: $address
+    amount: $amount
+  ) {
+    amount
+    __typename
+  }
+}
+
+query paymentRequest {
+  globals {
+    network
+    feesInformation {
+      deposit {
+        minBankFee
+        minBankFeeThreshold
+        ratio
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  me {
+    id
+    username
+    defaultAccount {
+      id
+      wallets {
+        id
+        balance
+        walletCurrency
+        __typename
+      }
+      defaultWalletId
+      __typename
+    }
+    __typename
+  }
+}
+
+query personalDetails {
+  me {
+    id
+    phone
+    email {
+      address
+      __typename
+    }
+    defaultAccount {
+      ... on ConsumerAccount {
+        id
+        firstName
+        lastName
+        onboardingStatus
+        cards {
+          id
+          shippingAddress {
+            firstName
+            lastName
+            line1
+            line2
+            city
+            region
+            postalCode
+            country
+            countryCode
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query priceHistoryScreen {
+  me {
+    id
+    defaultAccount {
+      id
+      __typename
+    }
+    __typename
+  }
+}
+
+query realtimePrice {
+  me {
+    id
+    defaultAccount {
+      id
+      realtimePrice {
+        btcSatPrice {
+          base
+          offset
+          __typename
+        }
+        denominatorCurrency
+        id
+        timestamp
+        usdCentPrice {
+          base
+          offset
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query realtimePriceUnauthed($currency: DisplayCurrency) {
+  realtimePrice(currency: $currency) {
+    btcSatPrice {
+      base
+      offset
+      __typename
+    }
+    denominatorCurrency
+    id
+    timestamp
+    usdCentPrice {
+      base
+      offset
+      __typename
+    }
+    __typename
+  }
+}
+
+query scanningQRCodeScreen {
+  globals {
+    network
+    __typename
+  }
+  me {
+    id
+    defaultAccount {
+      id
+      wallets {
+        id
+        __typename
+      }
+      __typename
+    }
+    contacts {
+      id
+      handle
+      username
+      __typename
+    }
+    __typename
+  }
+}
+
+query sendBitcoinConfirmationScreen {
+  me {
+    id
+    defaultAccount {
+      id
+      wallets {
+        id
+        balance
+        walletCurrency
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query sendBitcoinDestination {
+  globals {
+    network
+    __typename
+  }
+  me {
+    id
+    defaultAccount {
+      id
+      wallets {
+        id
+        __typename
+      }
+      __typename
+    }
+    contacts {
+      id
+      handle
+      username
+      alias
+      transactionsCount
+      __typename
+    }
+    __typename
+  }
+}
+
+query sendBitcoinDetailsScreen {
+  globals {
+    network
+    __typename
+  }
+  me {
+    id
+    defaultAccount {
+      id
+      defaultWalletId
+      wallets {
+        id
+        walletCurrency
+        balance
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query sendBitcoinInternalLimits {
+  me {
+    id
+    defaultAccount {
+      id
+      limits {
+        internalSend {
+          totalLimit
+          remainingLimit
+          interval
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query sendBitcoinWithdrawalLimits {
+  me {
+    id
+    defaultAccount {
+      id
+      limits {
+        withdrawal {
+          totalLimit
+          remainingLimit
+          interval
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query setDefaultAccountModal {
+  me {
+    id
+    defaultAccount {
+      id
+      defaultWalletId
+      wallets {
+        id
+        balance
+        walletCurrency
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query setDefaultWalletScreen {
+  me {
+    id
+    defaultAccount {
+      id
+      defaultWalletId
+      wallets {
+        id
+        balance
+        walletCurrency
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query supportedCountries {
+  globals {
+    supportedCountries {
+      id
+      supportedAuthChannels
+      __typename
+    }
+    __typename
+  }
+}
+
+query totpRegistrationScreen {
+  me {
+    id
+    username
+    __typename
+  }
+}
+
+query transactionListForContact($username: Username!, $first: Int, $after: String, $last: Int, $before: String) {
+  me {
+    id
+    contactByUsername(username: $username) {
+      transactions(first: $first, after: $after, last: $last, before: $before) {
+        ...TransactionList
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query transactionListForDefaultAccount($first: Int, $after: String, $walletIds: [WalletId!]) {
+  me {
+    id
+    defaultAccount {
+      id
+      pendingIncomingTransactions {
+        ...Transaction
+        __typename
+      }
+      transactions(first: $first, after: $after, walletIds: $walletIds) {
+        ...TransactionList
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query walletOverviewScreen {
+  me {
+    id
+    defaultAccount {
+      id
+      wallets {
+        id
+        balance
+        walletCurrency
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query wallets {
+  me {
+    id
+    defaultAccount {
+      id
+      wallets {
+        walletCurrency
+        id
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+query warningSecureAccount {
+  me {
+    id
+    defaultAccount {
+      level
+      id
+      wallets {
+        id
+        balance
+        walletCurrency
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+subscription myLnUpdates {
+  myUpdates {
+    errors {
+      message
+      __typename
+    }
+    update {
+      ... on LnUpdate {
+        paymentHash
+        status
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}

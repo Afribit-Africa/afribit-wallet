@@ -1,0 +1,63 @@
+import React, { useCallback, useEffect, useRef } from "react"
+
+import { makeStyles, Text } from "@rn-vui/themed"
+import {
+  CommonActions,
+  RouteProp,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native"
+
+import { Screen } from "@app/components/screen"
+import { SuccessScreenLayout } from "@app/components/success-screen-layout"
+import { useI18nContext } from "@app/i18n/i18n-react"
+import { RootStackParamList } from "@app/navigation/stack-param-lists"
+
+type SuccessRouteProp = RouteProp<RootStackParamList, "selfCustodialBackupSuccess">
+
+const NAVIGATE_HOME_DELAY_MS = 2000
+
+export const BackupSuccessScreen: React.FC = () => {
+  const { LL } = useI18nContext()
+  const styles = useStyles()
+  const navigation = useNavigation()
+  const params = useRoute<SuccessRouteProp>().params
+  const reBackup = params?.reBackup ?? false
+  const customMessage = params?.message
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  /** Never clears the migration checkpoint: a standalone backup by another account must
+   *  not wipe a pending migration, and a completed migration already cleared its own. */
+  const navigateToHome = useCallback(() => {
+    navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: "Primary" }] }))
+  }, [navigation])
+
+  const handleAnimationComplete = useCallback(() => {
+    holdTimerRef.current = setTimeout(navigateToHome, NAVIGATE_HOME_DELAY_MS)
+  }, [navigateToHome])
+
+  useEffect(() => () => clearTimeout(holdTimerRef.current), [])
+
+  const fallbackMessage = reBackup
+    ? LL.common.success()
+    : LL.BackupScreen.ManualBackup.Success.title()
+
+  const message = customMessage ?? fallbackMessage
+
+  return (
+    <Screen preset="fixed">
+      <SuccessScreenLayout onAnimationComplete={handleAnimationComplete}>
+        <Text style={styles.message}>{message}</Text>
+      </SuccessScreenLayout>
+    </Screen>
+  )
+}
+
+const useStyles = makeStyles(() => ({
+  message: {
+    fontSize: 18,
+    lineHeight: 24,
+    textAlign: "center",
+    width: 264,
+  },
+}))

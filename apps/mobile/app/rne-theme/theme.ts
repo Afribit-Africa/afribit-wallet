@@ -28,7 +28,7 @@ const theme = createTheme({
     Text: (props, { colors }) => {
       const universalStyle = {
         color: props.color || colors.black,
-        ...(isStorybook ? {} : { fontFamily: "SourceSansPro-Regular" }),
+        ...(isStorybook ? {} : { fontFamily: "Manrope-Regular" }),
       }
 
       const sizeStyle = props.type

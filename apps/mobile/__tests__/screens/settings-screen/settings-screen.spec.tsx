@@ -179,13 +179,6 @@ jest.mock("@app/graphql/generated", () => {
           id: "user-id",
           username: "test1",
           language: "en",
-          totpEnabled: false,
-          phone: testState.phone,
-          email: {
-            address: "test@example.com",
-            verified: true,
-            __typename: "Email",
-          },
           defaultAccount: {
             id: "account-id",
             defaultWalletId: "btc-wallet-id",
@@ -438,47 +431,6 @@ describe("Settings Screen", () => {
     await flushEffects()
   })
 
-  it("shows phone ln address when phone is verified", async () => {
-    const phone = "+50365055539"
-    const lnAddress = `${phone}@blink.sv`
-    testState.phone = phone
-
-    render(
-      <ContextForScreen>
-        <LoggedInWithUsername mock={mocksWithUsername} />
-      </ContextForScreen>,
-    )
-
-    await act(
-      () =>
-        new Promise((resolve) => {
-          setTimeout(resolve, 10)
-        }),
-    )
-
-    expect(screen.getByText(lnAddress)).toBeTruthy()
-
-    await flushEffects()
-  })
-
-  it("hides phone ln address when phone is missing", async () => {
-    testState.phone = null
-
-    render(
-      <ContextForScreen>
-        <LoggedInWithUsername mock={mocksWithUsername} />
-      </ContextForScreen>,
-    )
-
-    // flush pending effects/microtasks, then assert on the settled output
-    await act(async () => {})
-
-    expect(screen.queryByText("Set your lightning address")).toBeNull()
-    expect(screen.queryByText("+50365055539@blink.sv")).toBeNull()
-
-    await flushEffects()
-  })
-
   it("truncates long settings row titles", async () => {
     const longTitle = "This is a very long settings row title that should truncate"
 
@@ -527,19 +479,6 @@ describe("Settings Screen", () => {
     expect(titleNode.props.ellipsizeMode).toBe("tail")
     expect(subtitleNode.props.numberOfLines).toBe(1)
     expect(subtitleNode.props.ellipsizeMode).toBe("tail")
-  })
-
-  it("renders the Move to non-custodial option for a custodial account", async () => {
-    render(
-      <ContextForScreen>
-        <LoggedInWithUsername mock={mocksWithUsername} />
-      </ContextForScreen>,
-    )
-
-    // let the migration-checkpoint load settle so the row leaves its skeleton state
-    await flushEffects()
-
-    expect(screen.getByText("Move to non-custodial")).toBeTruthy()
   })
 
   it("does not render a standalone Recovery method group", async () => {

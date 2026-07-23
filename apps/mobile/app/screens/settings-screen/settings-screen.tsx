@@ -15,36 +15,23 @@ import { SettingsCard } from "./settings-card"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import { VersionComponent } from "@app/components/version"
 import { useIsAuthed } from "@app/graphql/is-authed-context"
-import { useLevel } from "@app/graphql/level-context"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
 import { useUnacknowledgedNotificationCountQuery } from "@app/graphql/generated"
 import { AccountType } from "@app/types/wallet"
 
 import { AccountBanner } from "./account/banner"
-import { EmailSetting } from "./account/settings/email"
-import { PhoneSetting } from "./account/settings/phone"
 import { SettingsGroup } from "./group"
 import { DefaultWallet } from "./settings/account-default-wallet"
 import { AccountLevelSetting } from "./settings/account-level"
 import { AccountLNAddress } from "./settings/account-ln-address"
-import { PhoneLnAddress } from "./settings/phone-ln-address"
-import { AccountPOS } from "./settings/account-pos"
-import { TxLimits } from "./settings/account-tx-limits"
-import { ApiAccessSetting } from "./settings/advanced-api-access"
-import { ExportCsvSetting } from "./settings/advanced-export-csv"
-import { JoinCommunitySetting } from "./settings/community-join"
-import { NeedHelpSetting } from "./settings/community-need-help"
 import { CurrencySetting } from "./settings/preferences-currency"
 import { LanguageSetting } from "./settings/preferences-language"
 import { ThemeSetting } from "./settings/preferences-theme"
 import { NotificationSetting } from "./settings/sp-notifications"
 import { OnDeviceSecuritySetting } from "./settings/sp-security"
-import { TotpSetting } from "./totp"
-import { AccountStaticQR } from "./settings/account-static-qr"
-import { MoveToNonCustodialSetting } from "./settings/account-move-to-noncustodial"
-import { SwitchAccountSetting } from "./settings/multi-account"
 import { StableBalanceSetting } from "./settings/stable-balance"
 import { ViewBackupPhraseSetting } from "./settings/view-backup-phrase"
+import { NeedHelpSetting } from "./settings/community-need-help"
 
 // All queries in settings have to be set here so that the server is not hit with
 // multiple requests for each query
@@ -61,6 +48,11 @@ gql`
       id
       username
       language
+      phone
+      email {
+        address
+        verified
+      }
       defaultAccount {
         id
         defaultWalletId
@@ -69,14 +61,6 @@ gql`
           balance
           walletCurrency
         }
-      }
-
-      # Authentication Stuff needed for account screen
-      totpEnabled
-      phone
-      email {
-        address
-        verified
       }
     }
   }
@@ -87,7 +71,6 @@ export const SettingsScreen: React.FC = () => {
   const { LL } = useI18nContext()
 
   const isAuthed = useIsAuthed()
-  const { isAtLeastLevelOne } = useLevel()
   const { activeAccount } = useAccountRegistry()
   const { backupState } = useBackupState()
   const { data: unackNotificationCount } = useUnacknowledgedNotificationCountQuery({
@@ -102,12 +85,8 @@ export const SettingsScreen: React.FC = () => {
   const items = {
     account: [
       AccountLevelSetting,
-      TxLimits,
-      SwitchAccountSetting,
-      MoveToNonCustodialSetting,
     ],
-    waysToGetPaid: [AccountLNAddress, PhoneLnAddress, AccountPOS, AccountStaticQR],
-    loginMethods: [EmailSetting, PhoneSetting],
+    waysToGetPaid: [AccountLNAddress],
     preferences: [
       NotificationSetting,
       DefaultWallet,
@@ -116,9 +95,8 @@ export const SettingsScreen: React.FC = () => {
       ThemeSetting,
       StableBalanceSetting,
     ],
-    securityAndPrivacy: [TotpSetting, OnDeviceSecuritySetting, ViewBackupPhraseSetting],
-    advanced: [ExportCsvSetting, ApiAccessSetting],
-    community: [NeedHelpSetting, JoinCommunitySetting],
+    securityAndPrivacy: [OnDeviceSecuritySetting, ViewBackupPhraseSetting],
+    community: [NeedHelpSetting],
   }
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
@@ -161,20 +139,11 @@ export const SettingsScreen: React.FC = () => {
           name={LL.SettingsScreen.addressScreen()}
           items={items.waysToGetPaid}
         />
-        {isAtLeastLevelOne && !isSelfCustodialMode && (
-          <SettingsGroup
-            name={LL.AccountScreen.loginMethods()}
-            items={items.loginMethods}
-          />
-        )}
         <SettingsGroup name={LL.common.preferences()} items={items.preferences} />
         <SettingsGroup
           name={LL.common.securityAndPrivacy()}
           items={items.securityAndPrivacy}
         />
-        {!isSelfCustodialMode && (
-          <SettingsGroup name={LL.common.advanced()} items={items.advanced} />
-        )}
         <SettingsGroup name={LL.common.support()} items={items.community} />
         <VersionComponent />
       </ScrollView>

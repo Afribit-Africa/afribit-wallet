@@ -40,17 +40,12 @@ import SendBitcoinConfirmationScreen from "@app/screens/send-bitcoin-screen/send
 import SendBitcoinDestinationScreen from "@app/screens/send-bitcoin-screen/send-bitcoin-destination-screen"
 import SendBitcoinDetailsScreen from "@app/screens/send-bitcoin-screen/send-bitcoin-details-screen"
 import { SetLightningAddressScreen } from "@app/screens/lightning-address-screen/set-lightning-address-screen"
-import { AccountScreen, SwitchAccount } from "@app/screens/settings-screen/account"
+import { AccountScreen } from "@app/screens/settings-screen/account"
 import { DefaultWalletScreen } from "@app/screens/settings-screen/default-wallet"
 import { DisplayCurrencyScreen } from "@app/screens/settings-screen/display-currency-screen"
 import { NotificationSettingsScreen } from "@app/screens/settings-screen/notifications-screen"
 import { ThemeScreen } from "@app/screens/settings-screen/theme-screen"
-import { TransactionLimitsScreen } from "@app/screens/settings-screen/transaction-limits-screen"
-import {
-  TotpLoginValidateScreen,
-  TotpRegistrationInitiateScreen,
-  TotpRegistrationValidateScreen,
-} from "@app/screens/totp-screen"
+import { TotpLoginValidateScreen } from "@app/screens/totp-screen"
 import { WebViewScreen } from "@app/screens/webview/webview"
 import { testProps } from "@app/utils/testProps"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
@@ -168,7 +163,6 @@ import { WindDownReceiveGate } from "@app/screens/account-migration/wind-down-re
 import { AcceptTermsAndConditionsScreen } from "@app/screens/accept-t-and-c"
 import { TouchableOpacity } from "react-native"
 import { useNavigation } from "@react-navigation/native"
-import { ApiScreen } from "@app/screens/settings-screen/api-screen"
 
 const RootNavigator = createNativeStackNavigator<RootStackParamList>()
 
@@ -505,34 +499,12 @@ export const RootStack = () => {
         options={{
           title: LL.common.account(),
         }}
-      />
-      <RootNavigator.Screen
-        name="profileScreen"
-        component={SwitchAccount}
-        options={{
-          title: LL.common.accounts(),
-          headerShadowVisible: false,
-        }}
-      />
+        />
       <RootNavigator.Screen
         name="notificationSettingsScreen"
         component={NotificationSettingsScreen}
         options={{
           title: LL.NotificationSettingsScreen.title(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="apiScreen"
-        component={ApiScreen}
-        options={{
-          title: LL.SettingsScreen.apiAcess(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="transactionLimitsScreen"
-        component={TransactionLimitsScreen}
-        options={{
-          title: LL.common.transactionLimits(),
         }}
       />
       <RootNavigator.Screen
@@ -570,20 +542,6 @@ export const RootStack = () => {
         component={EmailLoginValidateScreen}
         options={{
           title: LL.common.codeConfirmation(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="totpRegistrationInitiate"
-        component={TotpRegistrationInitiateScreen}
-        options={{
-          title: LL.TotpRegistrationInitiateScreen.title(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="totpRegistrationValidate"
-        component={TotpRegistrationValidateScreen}
-        options={{
-          title: LL.TotpRegistrationValidateScreen.title(),
         }}
       />
       <RootNavigator.Screen

@@ -11,15 +11,11 @@ import { useSelfCustodialWallet } from "@app/self-custodial/providers/wallet"
 import { AccountType } from "@app/types/wallet"
 import { testProps } from "@app/utils/testProps"
 
-import { SettingsGroup } from "../group"
 import { AccountFields } from "../self-custodial/account-fields"
 
 import { AccountDeleteContextProvider } from "./account-delete-context"
 import { AccountBannerVertical } from "./banner-vertical"
-import { AccountId } from "./id"
 import { DangerZoneSettings } from "./settings/danger-zone"
-import { UpgradeAccountLevelOne } from "./settings/upgrade"
-import { UpgradeTrialAccount } from "./settings/upgrade-trial-account"
 
 export const AccountScreen: React.FC = () => {
   const styles = useStyles()
@@ -68,18 +64,7 @@ export const AccountScreen: React.FC = () => {
           {...testProps("account-screen-scroll-view")}
         >
           <AccountBannerVertical />
-          {isSelfCustodial ? (
-            <AccountFields />
-          ) : (
-            <>
-              <UpgradeTrialAccount />
-              <SettingsGroup
-                items={[UpgradeAccountLevelOne]}
-                name={LL.AccountScreen.upgrade()}
-              />
-              <AccountId />
-            </>
-          )}
+          {isSelfCustodial && <AccountFields />}
           <DangerZoneSettings />
         </ScrollView>
       </Screen>

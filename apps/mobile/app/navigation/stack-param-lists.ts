@@ -123,10 +123,7 @@ export type RootStackParamList = {
   }
   Earn: undefined
   accountScreen: undefined
-  profileScreen: undefined
   notificationSettingsScreen: undefined
-  apiScreen: undefined
-  transactionLimitsScreen: undefined
   acceptTermsAndConditions: NewAccountFlowParamsList
   emailRegistrationInitiate?: { onboarding?: boolean; hasUsername?: boolean }
   emailRegistrationValidate: {
@@ -137,8 +134,6 @@ export type RootStackParamList = {
   }
   emailLoginInitiate: undefined
   emailLoginValidate: { email: string; emailLoginId: string }
-  totpRegistrationInitiate: undefined
-  totpRegistrationValidate: { totpRegistrationId: string }
   totpLoginValidate: { authToken: string }
   webView: { url: string; initialTitle?: string; headerTitle?: string }
   fullOnboardingFlow: undefined

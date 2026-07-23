@@ -1,8 +1,10 @@
 import React from "react"
 import { useNotificationSettingsQuery } from "@app/graphql/generated"
 import { useIsAuthed } from "@app/graphql/is-authed-context"
+import { useAccountRegistry } from "@app/hooks/use-account-registry"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
+import { AccountType } from "@app/types/wallet"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
@@ -14,11 +16,14 @@ const TOTAL_CATEGORIES = Object.keys(NotificationCategories).length
 export const NotificationSetting: React.FC = () => {
   const { LL } = useI18nContext()
   const { navigate } = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
+  const { activeAccount } = useAccountRegistry()
   const isAuthed = useIsAuthed()
   const { data } = useNotificationSettingsQuery({
     fetchPolicy: "cache-first",
     skip: !isAuthed,
   })
+
+  if (activeAccount?.type === AccountType.SelfCustodial) return null
 
   const pushSettings = data?.me?.defaultAccount?.notificationSettings?.push
   const disabledCount = pushSettings?.disabledCategories.length ?? 0

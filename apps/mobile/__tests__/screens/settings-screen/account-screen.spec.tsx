@@ -162,18 +162,6 @@ jest.mock("@app/screens/settings-screen/account/settings/danger-zone", () => ({
   DangerZoneSettings: () => React.createElement("View", { testID: "danger-zone" }),
 }))
 
-jest.mock("@app/screens/settings-screen/account/settings/upgrade-trial-account", () => ({
-  UpgradeTrialAccount: () => React.createElement("View", { testID: "upgrade-trial" }),
-}))
-
-jest.mock("@app/screens/settings-screen/account/settings/upgrade", () => ({
-  UpgradeAccountLevelOne: () => null,
-}))
-
-jest.mock("@app/screens/settings-screen/account/id", () => ({
-  AccountId: () => React.createElement("View", { testID: "account-id" }),
-}))
-
 describe("AccountScreen", () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -202,13 +190,6 @@ describe("AccountScreen", () => {
       expect(getByTestId("account-info-backup-status").props.children).toBe(
         "Backup complete",
       )
-    })
-
-    it("hides custodial-only rows", () => {
-      const { queryByTestId } = render(<AccountScreen />)
-
-      expect(queryByTestId("upgrade-trial")).toBeNull()
-      expect(queryByTestId("account-id")).toBeNull()
     })
 
     it("still renders the Danger zone row", () => {
@@ -302,16 +283,7 @@ describe("AccountScreen", () => {
       expect(captureRefreshControl.refreshing).toBe(false)
     })
 
-    it("renders the existing custodial layout (AccountId + upgrade rows)", () => {
-      const { getByTestId, queryByText } = render(<AccountScreen />)
-
-      expect(getByTestId("account-id")).toBeTruthy()
-      expect(getByTestId("upgrade-trial")).toBeTruthy()
-      expect(queryByText("Wallet identifier")).toBeNull()
-      expect(queryByText("Backup status")).toBeNull()
-    })
-
-    it("still renders the Danger zone row", () => {
+    it("renders the Danger zone row in custodial mode", () => {
       const { getByTestId } = render(<AccountScreen />)
 
       expect(getByTestId("danger-zone")).toBeTruthy()

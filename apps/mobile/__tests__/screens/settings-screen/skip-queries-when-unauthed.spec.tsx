@@ -17,7 +17,6 @@ jest.mock("@app/graphql/generated", () => ({
     mockUseUnacknowledgedNotificationCountQuery(opts),
   useLanguageQuery: (opts: unknown) => mockUseLanguageQuery(opts),
   useUserUpdateLanguageMutation: () => [jest.fn(), { loading: false }],
-  useExportCsvSettingLazyQuery: () => [jest.fn(), { loading: false }],
 }))
 
 jest.mock("@react-navigation/native", () => ({
@@ -124,9 +123,6 @@ import { AccountBanner } from "@app/screens/settings-screen/account/banner"
 import { useLoginMethods } from "@app/screens/settings-screen/account/login-methods-hook"
 import { DefaultWallet } from "@app/screens/settings-screen/settings/account-default-wallet"
 import { AccountLNAddress } from "@app/screens/settings-screen/settings/account-ln-address"
-import { AccountPOS } from "@app/screens/settings-screen/settings/account-pos"
-import { AccountStaticQR } from "@app/screens/settings-screen/settings/account-static-qr"
-import { ExportCsvSetting } from "@app/screens/settings-screen/settings/advanced-export-csv"
 import { LanguageSetting } from "@app/screens/settings-screen/settings/preferences-language"
 
 const renderWithAuth = (component: React.ReactElement, isAuthed: boolean) =>
@@ -147,10 +143,7 @@ describe("settings skips graphql queries when unauthenticated", () => {
   describe("useSettingsScreenQuery consumers without fetchPolicy", () => {
     const consumers = [
       { name: "DefaultWallet", make: () => <DefaultWallet /> },
-      { name: "AccountPOS", make: () => <AccountPOS /> },
-      { name: "AccountStaticQR", make: () => <AccountStaticQR /> },
       { name: "AccountLNAddress", make: () => <AccountLNAddress /> },
-      { name: "ExportCsvSetting", make: () => <ExportCsvSetting /> },
     ]
 
     it.each(consumers)("$name passes skip: true when unauthed", ({ make }) => {

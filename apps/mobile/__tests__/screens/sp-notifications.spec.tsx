@@ -29,6 +29,13 @@ jest.mock("@app/graphql/generated", () => ({
   useNotificationSettingsQuery: jest.fn(() => mockedQueryResult),
 }))
 
+jest.mock("@app/hooks/use-account-registry", () => ({
+  ...jest.requireActual("@app/hooks/use-account-registry"),
+  useAccountRegistry: () => ({
+    activeAccount: { type: "custodial" },
+  }),
+}))
+
 jest.mock("@app/hooks/use-app-config", () => ({
   useAppConfig: () => ({
     appConfig: {

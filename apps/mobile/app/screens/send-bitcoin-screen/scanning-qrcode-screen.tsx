@@ -76,7 +76,7 @@ export const ScanningQRCodeScreen: React.FC = () => {
   useRealtimePriceQuery({ fetchPolicy: "network-only" })
 
   const {
-    theme: { colors },
+    theme: { colors, mode },
   } = useTheme()
 
   const [pending, setPending] = React.useState(false)
@@ -337,7 +337,7 @@ export const ScanningQRCodeScreen: React.FC = () => {
 
   if (isCameraUnavailable) {
     return (
-      <Screen>
+      <Screen backgroundColor={colors.white}>
         <View style={styles.permissionMissing}>
           <Text type="h1" style={styles.permissionMissingText}>
             {LL.ScanningQRCodeScreen.noCamera()}
@@ -355,7 +355,7 @@ export const ScanningQRCodeScreen: React.FC = () => {
     }
 
     return (
-      <Screen>
+      <Screen backgroundColor={colors.white}>
         <View style={styles.permissionMissing}>
           <Text type="h1" style={styles.permissionMissingText}>
             {LL.ScanningQRCodeScreen.permissionCamera()}
@@ -389,26 +389,31 @@ export const ScanningQRCodeScreen: React.FC = () => {
         <Pressable onPress={navigation.goBack}>
           <View style={styles.close}>
             <Svg viewBox="0 0 100 100">
-              <Circle cx={50} cy={50} r={50} fill={colors._white} opacity={0.5} />
+              {/* Fixed white, not a theme token: this semi-transparent circle
+                  sits over the live camera feed, not a themed surface. */}
+              <Circle cx={50} cy={50} r={50} fill="#FFFFFF" opacity={0.5} />
             </Svg>
             <GaloyIcon name="close" size={64} style={styles.iconClose} />
           </View>
         </Pressable>
         <View style={styles.openGallery}>
           <Pressable onPress={showImagePicker}>
+            {/* Fixed light-grey, not a theme token: this icon sits over the
+                live camera feed where a fixed light-on-dark treatment is needed. */}
             <GaloyIcon
               name="image"
               size={64}
-              color={colors._lightGrey}
+              color="#A8A39A"
               style={styles.iconGalery}
             />
           </Pressable>
           <Pressable onPress={handleInvoicePaste}>
-            {/* we could Paste from "FontAwesome" but as svg*/}
+            {/* Fixed light-grey, not a theme token: this icon sits over the
+                live camera feed where a fixed light-on-dark treatment is needed. */}
             <GaloyIcon
               name="clipboard"
               size={64}
-              color={colors._lightGrey}
+              color="#A8A39A"
               style={styles.iconClipboard}
             />
           </Pressable>
@@ -452,7 +457,9 @@ const useStyles = makeStyles(({ colors }) => ({
     top: 0,
   },
 
-  iconClose: { position: "absolute", top: -2, color: colors._black },
+  // Fixed dark, not a theme token: the close icon sits over a semi-transparent
+  // white circle which in turn sits over the live camera feed.
+  iconClose: { position: "absolute", top: -2, color: "#0F0F11" },
 
   iconGalery: { opacity: 0.8 },
 

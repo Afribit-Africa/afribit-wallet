@@ -465,22 +465,31 @@ export const ScanningQRCodeScreen: React.FC = () => {
             <View style={styles.detectedHandle} />
             {detectedData?.qrResult ? (
               <>
-                {detectedData.qrResult.type === "lightning" ? (
-                  <View style={styles.detectedPill}>
-                    <GaloyIcon name="lightning" size={14} color={colors.primary} />
-                    <Text style={styles.detectedPillText}>Lightning</Text>
-                  </View>
-                ) : (
-                  <View
-                    style={[
-                      styles.detectedPill,
-                      { backgroundColor: colors.backdropWhite },
-                    ]}
-                  >
-                    <GaloyIcon name="lightning" size={14} color={colors.primary} />
-                    <Text style={styles.detectedPillText}>M-Pesa</Text>
-                  </View>
-                )}
+{detectedData.qrResult.type === "lightning" ? (
+                    <View style={styles.detectedPill}>
+                      <GaloyIcon name="lightning" size={14} color={colors.primary} />
+                      <Text style={styles.detectedPillText}>Lightning</Text>
+                    </View>
+                  ) : (
+                    <View
+                      style={[
+                        styles.detectedPill,
+                        { backgroundColor: colors.backdropWhite },
+                      ]}
+                    >
+                      <GaloyIcon name="lightning" size={14} color={colors.primary} />
+                      <Text style={styles.detectedPillText}>
+                        M-Pesa{" "}
+                        {"subType" in detectedData.qrResult &&
+                        detectedData.qrResult.subType === "till"
+                          ? "Till"
+                          : "subType" in detectedData.qrResult &&
+                              detectedData.qrResult.subType === "paybill"
+                            ? "Paybill"
+                            : ""}
+                      </Text>
+                    </View>
+                  )}
                 <Text style={styles.detectedMerchant}>
                   {detectedData.qrResult.type === "ke_qr" &&
                   detectedData.qrResult.merchantName

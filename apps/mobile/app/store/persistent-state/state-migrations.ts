@@ -262,7 +262,12 @@ export type PersistentState = PersistentState_14
 
 export const defaultPersistentState: PersistentState = {
   schemaVersion: 14,
-  galoyInstance: { id: "Main" },
+  // TEMPORARY (Phase 1, sandbox-only): default fresh installs to Staging/Regtest
+  // instead of Main/Mainnet. Nothing should touch mainnet before the compliance
+  // and liquidity groundwork in the roadmap is in place. Revert to "Main" once
+  // this is enforced some other way (build flavor, remote config) ahead of any
+  // public release.
+  galoyInstance: { id: "Staging" },
   galoyAuthToken: "",
 }
 

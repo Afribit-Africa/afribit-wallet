@@ -68,6 +68,16 @@ export const requireBreezApiKey = (): string => {
   return apiKey
 }
 
+export const requireBitikaApiKey = (): string => {
+  const apiKey = Config.BITIKA_API_KEY
+  if (!apiKey) {
+    throw new Error("BITIKA_API_KEY is not configured for this build")
+  }
+  return apiKey
+}
+
+export const BITIKA_BASE_URL = "https://bitikaserver.up.railway.app"
+
 let cachedTokenIdentifier: string | null = null
 
 // Validates SPARK_TOKEN_IDENTIFIER once per session. The first call (typically

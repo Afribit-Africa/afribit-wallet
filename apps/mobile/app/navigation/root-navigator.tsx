@@ -83,6 +83,7 @@ import { SecurityScreen } from "../screens/settings-screen/security-screen"
 import { TransactionDetailScreen } from "../screens/transaction-detail-screen"
 import { TemporarilyUnavailableScreen } from "../screens/feature-unavailable/temporarily-unavailable-screen"
 import { StableBalanceSettingsScreen } from "../screens/stable-balance-settings-screen"
+import { BuyBitcoinScreen } from "../screens/buy-bitcoin-screen"
 import { TransactionHistoryScreen } from "../screens/transaction-history/transaction-history-screen"
 import { UnclaimedDepositsScreen } from "../screens/unclaimed-deposits/unclaimed-deposits-screen"
 
@@ -788,6 +789,11 @@ export const RootStack = () => {
         name="stableBalanceSettings"
         component={StableBalanceSettingsScreen}
         options={{ title: LL.StableBalance.settingsTitle() }}
+      />
+      <RootNavigator.Screen
+        name="buyBitcoin"
+        component={BuyBitcoinScreen}
+        options={{ headerShown: false }}
       />
       <RootNavigator.Screen
         name="accountMigrationStart"

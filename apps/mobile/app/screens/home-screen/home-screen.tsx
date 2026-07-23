@@ -28,6 +28,7 @@ import SlideUpHandle from "@app/components/slide-up-handle"
 import { Screen } from "@app/components/screen"
 import AfribitMonogramWhite from "@app/assets/logo/afribit/afribit-monogram-white.svg"
 import AfribitMonogramBlack from "@app/assets/logo/afribit/afribit-monogram-black.svg"
+import BitikaIcon from "@app/assets/logo/bitika/bitika-icon.svg"
 import {
   UnseenTxAmountBadge,
   useUnseenTxAmountBadge,
@@ -793,10 +794,11 @@ export const HomeScreen: React.FC = () => {
         </View>
 
         {/* ─── BUY BITCOIN WITH M-PESA ─── */}
-        {/* No existing M-Pesa purchase flow is wired yet. Button is present
-            but non-functional until an on-ramp integration is added. */}
-        <Pressable style={styles.buyButton}>
-          <Text style={[styles.buyButtonPlus, { color: colors.primary }]}>+</Text>
+        <Pressable
+          style={styles.buyButton}
+          onPress={() => navigation.navigate("buyBitcoin")}
+        >
+          <BitikaIcon width={16} height={16} />
           <Text style={styles.buyButtonText}>Buy bitcoin with M-Pesa</Text>
         </Pressable>
 
@@ -1072,10 +1074,6 @@ const useStyles = makeStyles(({ colors }) => ({
     justifyContent: "center",
     alignItems: "center",
     gap: 8,
-  },
-  buyButtonPlus: {
-    fontSize: 20,
-    fontWeight: "700",
   },
   buyButtonText: {
     fontSize: 15,

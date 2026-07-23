@@ -206,6 +206,7 @@ export type RootStackParamList = {
   selfCustodialRestoreMethod: undefined
   selfCustodialCloudRestore: undefined
   stableBalanceSettings: undefined
+  buyBitcoin: undefined
 }
 
 export type OnboardingStackParamList = {

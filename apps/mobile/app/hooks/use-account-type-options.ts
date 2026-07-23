@@ -1,8 +1,6 @@
 import { useFeatureFlags } from "@app/config/feature-flags-context"
 import { AccountTypeMode } from "@app/types/account"
 
-import { useCustodialEligibility } from "./use-custodial-eligibility"
-
 export const AccountOption = {
   Custodial: "custodial",
   SelfCustodial: "selfCustodial",
@@ -35,22 +33,17 @@ type AccountTypeOptionsResult = {
 }
 
 export const useAccountTypeOptions = (
-  mode: AccountTypeMode = AccountTypeMode.Create,
+  _mode: AccountTypeMode = AccountTypeMode.Create,
 ): AccountTypeOptionsResult => {
   const { nonCustodialEnabled } = useFeatureFlags()
-  const { signupAllowed, loading } = useCustodialEligibility()
-
-  const isRestore = mode === AccountTypeMode.Restore
-  const custodialAvailable = isRestore || signupAllowed
 
   const options: AccountOption[] = []
   if (nonCustodialEnabled) options.push(AccountOption.SelfCustodial)
-  if (custodialAvailable) options.push(AccountOption.Custodial)
 
   return {
     options,
     defaultSelected: options.length === 1 ? options[0] : null,
     selfCustodialTemporarilyDisabled: !nonCustodialEnabled,
-    loading: isRestore ? false : loading,
+    loading: false,
   }
 }

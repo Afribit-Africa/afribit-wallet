@@ -312,4 +312,59 @@ describe("ScanningQRCodeScreen", () => {
 
     expect(mockResolveDestination).toHaveBeenCalledTimes(1)
   })
+
+  describe("mode toggle", () => {
+    it("shows mismatch alert when scanning a KE-QR code in Lightning mode", async () => {
+      mockResolveDestination.mockResolvedValue({
+        valid: true,
+        destinationDirection: DestinationDirection.Send,
+        validDestination: { paymentType: "Lightning" },
+        createPaymentDetail: jest.fn(),
+      })
+
+      await renderScreen()
+      await fireScan("BG|123456|100")
+
+      await waitFor(() => expect(alertSpy).toHaveBeenCalled())
+      expect(mockResolveDestination).not.toHaveBeenCalled()
+    })
+
+    it("shows detected sheet for KE-QR when in M-Pesa mode", async () => {
+      const { getByTestId } = await renderScreen()
+      await act(async () => {
+        fireEvent.press(getByTestId("mode-mpesa"))
+      })
+      await fireScan("BG|123456|100")
+
+      expect(getByTestId("detected-continue")).toBeTruthy()
+    })
+
+    it("shows mismatch alert when scanning a Lightning code in M-Pesa mode", async () => {
+      mockResolveDestination.mockResolvedValue({
+        valid: true,
+        destinationDirection: DestinationDirection.Send,
+        validDestination: { paymentType: "Lightning" },
+        createPaymentDetail: jest.fn(),
+      })
+
+      const { getByTestId } = await renderScreen()
+      await act(async () => {
+        fireEvent.press(getByTestId("mode-mpesa"))
+      })
+      await fireScan("lnbc1qrcode")
+
+      await waitFor(() => expect(alertSpy).toHaveBeenCalled())
+      expect(mockResolveDestination).not.toHaveBeenCalled()
+    })
+
+    it("shows invalid alert for unrecognized code in M-Pesa mode", async () => {
+      const { getByTestId } = await renderScreen()
+      await act(async () => {
+        fireEvent.press(getByTestId("mode-mpesa"))
+      })
+      await fireScan("garbage")
+
+      await waitFor(() => expect(alertSpy).toHaveBeenCalled())
+    })
+  })
 })

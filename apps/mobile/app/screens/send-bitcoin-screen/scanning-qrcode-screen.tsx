@@ -92,6 +92,9 @@ export const ScanningQRCodeScreen: React.FC = () => {
   } | null>(null)
   const [showComingSoon, setShowComingSoon] = React.useState(false)
 
+  type ScanMode = "lightning" | "mpesa"
+  const [scanMode, setScanMode] = React.useState<ScanMode>("lightning")
+
   const { myWalletIds, bitcoinNetwork, lnurlDomains } = useScanContext()
   const [accountDefaultWalletQuery] = useAccountDefaultWalletLazyQuery({
     fetchPolicy: "no-cache",
@@ -293,13 +296,46 @@ export const ScanningQRCodeScreen: React.FC = () => {
       setScannedCache(new Set(scannedCache).add(data))
 
       const qrResult = parseKeQr(data)
-      if (qrResult.type === "lightning" || qrResult.type === "ke_qr") {
+
+      if (scanMode === "lightning") {
+        if (qrResult.type === "ke_qr") {
+          Alert.alert(
+            LL.ScanningQRCodeScreen.invalidTitle(),
+            "This looks like an M-Pesa code — switch modes above to scan it.",
+            [{ text: LL.common.ok(), onPress: () => setPending(false) }],
+          )
+          return
+        }
+        if (qrResult.type === "lightning") {
+          setDetectedData({ qrResult, rawData: data })
+          return
+        }
+        processInvoice(data)
+        return
+      }
+
+      // scanMode === "mpesa"
+      if (qrResult.type === "lightning") {
+        Alert.alert(
+          LL.ScanningQRCodeScreen.invalidTitle(),
+          "This looks like a Lightning code — switch modes above to scan it.",
+          [{ text: LL.common.ok(), onPress: () => setPending(false) }],
+        )
+        return
+      }
+      if (qrResult.type === "ke_qr") {
         setDetectedData({ qrResult, rawData: data })
         return
       }
-      processInvoice(data)
+      Alert.alert(
+        LL.ScanningQRCodeScreen.invalidTitle(),
+        LL.ScanningQRCodeScreen.invalidContent({
+          found: data.toString(),
+        }),
+        [{ text: LL.common.ok(), onPress: () => setPending(false) }],
+      )
     },
-    [scannedCache, pending, processInvoice],
+    [scannedCache, pending, processInvoice, scanMode, LL],
   )
 
   const styles = useStyles()
@@ -429,6 +465,51 @@ export const ScanningQRCodeScreen: React.FC = () => {
             <GaloyIcon name="close" size={64} style={styles.iconClose} />
           </View>
         </Pressable>
+        <View style={styles.modeToggleContainer}>
+          <View style={styles.modeToggleOuter}>
+            <Pressable
+              onPress={() => setScanMode("lightning")}
+              style={[
+                styles.modeToggleSegment,
+                scanMode === "lightning" && styles.modeToggleSegmentActive,
+              ]}
+              {...testProps("mode-lightning")}
+            >
+              <Text
+                style={
+                  scanMode === "lightning"
+                    ? styles.modeToggleTextActive
+                    : styles.modeToggleText
+                }
+              >
+                Lightning
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setScanMode("mpesa")}
+              style={[
+                styles.modeToggleSegment,
+                scanMode === "mpesa" && styles.modeToggleSegmentActive,
+              ]}
+              {...testProps("mode-mpesa")}
+            >
+              <Text
+                style={
+                  scanMode === "mpesa"
+                    ? styles.modeToggleTextActive
+                    : styles.modeToggleText
+                }
+              >
+                M-Pesa
+              </Text>
+            </Pressable>
+          </View>
+          <Text style={styles.modeHint}>
+            {scanMode === "lightning"
+              ? "Scan a Lightning invoice"
+              : "Scan an M-Pesa code"}
+          </Text>
+        </View>
         <View style={styles.openGallery}>
           <Pressable onPress={showImagePicker}>
             {/* Fixed light-grey, not a theme token: this icon sits over the
@@ -512,7 +593,7 @@ export const ScanningQRCodeScreen: React.FC = () => {
                   {...testProps("detected-continue")}
                 />
                 <Text style={styles.detectedFooter}>
-                  One scan for Lightning & M-Pesa — no switching
+                  Switch modes above to scan the other rail
                 </Text>
               </>
             ) : null}
@@ -549,6 +630,44 @@ export const ScanningQRCodeScreen: React.FC = () => {
 }
 
 const useStyles = makeStyles(({ colors }) => ({
+  // ── MODE TOGGLE (overlay on camera feed, dark background by design) ──
+  modeToggleContainer: {
+    alignItems: "center",
+    marginTop: 80,
+    gap: 7,
+  },
+  modeToggleOuter: {
+    flexDirection: "row",
+    padding: 4,
+    borderRadius: 12,
+    backgroundColor: "rgba(10,10,12,0.7)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  modeToggleSegment: {
+    paddingHorizontal: 15,
+    paddingVertical: 7,
+    borderRadius: 9,
+  },
+  modeToggleSegmentActive: {
+    backgroundColor: colors.primary,
+  },
+  modeToggleText: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: "rgba(255,255,255,0.7)",
+  },
+  modeToggleTextActive: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  modeHint: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: "rgba(255,255,255,0.5)",
+  },
+
   close: {
     alignSelf: "flex-end",
     height: 64,

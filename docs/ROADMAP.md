@@ -17,9 +17,9 @@ This roadmap is sequenced deliberately: nothing that touches real money happens 
 - [ ] Afribit Pay branding and theming (light/dark, system-default) applied throughout — Home/Send/Receive/Scan done; Settings and the new Buy screen still pending
 
 ## Phase 2 — On-ramp
-- [ ] Integrate Bitika sandbox API (in progress, 2026-07-23)
-- [ ] Buy flow: M-Pesa amount → STK push → sats delivered to user's own wallet
-- [ ] Test against Bitika's sandbox limits and webhook confirmations before any live-money work
+- [x] Integrate Bitika sandbox API (2026-07-23)
+- [x] Buy flow: M-Pesa amount → STK push → sats delivered to user's own wallet
+- [ ] Test against Bitika's sandbox limits and webhook confirmations before any live-money work — code path is in place (polls `/api/v1/transactions/code/{code}`); an actual end-to-end sandbox run with real API responses (incl. the `000001`/`000002` decline scenarios) hasn't been exercised on-device yet
 
 ## Phase 3 — Off-ramp foundation (sandbox only)
 - [ ] KE-QR parsing: recognize till, paybill, and send-money QR formats

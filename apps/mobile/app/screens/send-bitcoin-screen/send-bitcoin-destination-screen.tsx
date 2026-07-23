@@ -1067,7 +1067,7 @@ const PhoneInputSection: React.FC<PhoneInputSectionProps> = ({
           inputContainerStyle={
             activeInputRef.current === InputType.Phone && inputContainerStyle
           }
-          bgColor={colors.grey6}
+          bgColor={colors.grey5}
           keepCountryCode={keepCountryCode}
         />
       </View>
@@ -1103,7 +1103,7 @@ const usestyles = makeStyles(({ colors }) => ({
   fieldBackground: {
     flexDirection: "row",
     overflow: "hidden",
-    backgroundColor: colors.grey6,
+    backgroundColor: colors.grey5,
     borderRadius: 10,
     borderColor: colors.transparent,
     borderWidth: 1,
@@ -1117,7 +1117,7 @@ const usestyles = makeStyles(({ colors }) => ({
     borderWidth: 1,
   },
   validInputContainer: {
-    borderColor: colors._green,
+    borderColor: colors.primary,
     borderWidth: 1,
   },
   warningInputContainer: {
@@ -1197,7 +1197,7 @@ const usestyles = makeStyles(({ colors }) => ({
     marginBottom: 30,
   },
   line: {
-    backgroundColor: colors.grey4,
+    backgroundColor: colors.grey5,
     height: 1,
     borderRadius: 10,
     flex: 1,
@@ -1213,13 +1213,13 @@ const usestyles = makeStyles(({ colors }) => ({
     zIndex: 1,
   },
   textInformation: {
-    color: colors.grey1,
+    color: colors.grey3,
     textAlign: "center",
     fontSize: 16,
   },
   disabledInput: { opacity: 0.6 },
   borderFocusedInput: {
-    borderColor: colors._green,
+    borderColor: colors.primary,
     borderWidth: 1,
     borderBottomWidth: 1,
   },
@@ -1240,10 +1240,10 @@ const usestyles = makeStyles(({ colors }) => ({
   },
   listContainerSelected: {
     borderColor: colors.primary,
-    backgroundColor: colors.grey6,
+    backgroundColor: colors.grey5,
   },
   listItemContainer: {
-    borderColor: colors.grey4,
+    borderColor: colors.grey5,
     borderBottomWidth: 1,
   },
   listItemContainerBase: {

@@ -8,16 +8,16 @@ This roadmap is sequenced deliberately: nothing that touches real money happens 
 - [ ] Phase 1 vector logo, constructed properly (in progress)
 - [ ] Landing page v1 and v2 animation pass (in progress)
 - [x] Core docs: README, PRD, Roadmap, Contributing, Setup (this batch)
-- [ ] Repo restructured into the layout described in README.md
+- [x] Repo restructured into the layout described in README.md
 
 ## Phase 1 — Wallet core
-- [ ] Rebase `AfriBit-wallet` fork onto current Blink 3.0 / Spark-based core
-- [ ] Confirm non-custodial account flow works end to end (recovery phrase, self-custody, unilateral exit path)
-- [ ] Basic send/receive Lightning working in the rebased app
-- [ ] Afribit Pay branding and theming (light/dark, system-default) applied throughout
+- [x] Rebase `AfriBit-wallet` fork onto current Blink 3.0 / Spark-based core
+- [x] Confirm non-custodial account flow works end to end (recovery phrase, self-custody, unilateral exit path)
+- [x] Basic send/receive Lightning working in the rebased app
+- [ ] Afribit Pay branding and theming (light/dark, system-default) applied throughout — Home/Send/Receive/Scan done; Settings and the new Buy screen still pending
 
 ## Phase 2 — On-ramp
-- [ ] Integrate Bitika sandbox API
+- [ ] Integrate Bitika sandbox API (in progress, 2026-07-23)
 - [ ] Buy flow: M-Pesa amount → STK push → sats delivered to user's own wallet
 - [ ] Test against Bitika's sandbox limits and webhook confirmations before any live-money work
 

@@ -10,17 +10,15 @@ import { ScrollView, TouchableWithoutFeedback } from "react-native-gesture-handl
 
 import { AppUpdate } from "@app/components/app-update/app-update"
 import { GaloyErrorBox } from "@app/components/atomic/galoy-error-box"
-import { GaloyIcon, icons } from "@app/components/atomic/galoy-icon"
-import { GaloyIconButton } from "@app/components/atomic/galoy-icon-button"
+import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
-import { DisabledFeature } from "@app/components/disabled-feature"
 import { BulletinsCard } from "@app/components/notifications/bulletins"
 import { SetDefaultAccountModal } from "@app/components/set-default-account-modal"
 import { StableSatsModal } from "@app/components/stablesats-modal"
 import { DollarBalanceRestrictionModal } from "@app/components/dollar-balance-restriction-modal"
 import { UsdConvertToBtcModal } from "@app/components/usd-convert-to-btc-modal"
 import WalletOverview from "@app/components/wallet-overview/wallet-overview"
-import { BalanceHeader, useTotalBalance } from "@app/components/balance-header"
+import { useTotalBalance } from "@app/components/balance-header"
 import { BalanceMode, useBalanceMode } from "@app/hooks/use-balance-mode"
 import { useDisplayCurrency } from "@app/hooks/use-display-currency"
 import { toBtcMoneyAmount, toUsdMoneyAmount } from "@app/types/amounts"
@@ -69,7 +67,6 @@ import { getBtcWallet, getUsdWallet } from "@app/graphql/wallets-utils"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import { UnclaimedDepositBanner } from "@app/components/unclaimed-deposit-banner"
 import { testProps } from "@app/utils/testProps"
-import { isIos } from "@app/utils/helper"
 import { extractLightningAddressUsername } from "@app/utils/pay-links"
 import {
   useAppConfig,
@@ -181,6 +178,32 @@ gql`
     }
   }
 `
+
+const timeAgo = (pastTimestamp: number): string => {
+  const now = Math.floor(Date.now() / 1000)
+  const diff = now - pastTimestamp
+  if (diff < 60) return "now"
+  const minutes = Math.floor(diff / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
+}
+
+const getTxMethodLabel = (tx: TransactionFragment): string => {
+  const via = tx.initiationVia
+  switch (via.__typename) {
+    case "InitiationViaLn":
+      return "Lightning"
+    case "InitiationViaOnChain":
+      return "On-chain"
+    case "InitiationViaIntraLedger":
+      return "Afribit Pay"
+    default:
+      return "Bitcoin"
+  }
+}
 
 export const HomeScreen: React.FC = () => {
   const styles = useStyles()
@@ -315,12 +338,18 @@ export const HomeScreen: React.FC = () => {
   const showStableBalanceToggle =
     stableBalanceEnabled && isSelfCustodial && isStableBalanceActive
 
-  const { formatMoneyAmount } = useDisplayCurrency()
+  const { formatMoneyAmount, displayCurrency, moneyAmountToDisplayCurrencyString } =
+    useDisplayCurrency()
 
   const formattedBalance =
     showStableBalanceToggle && balanceMode === BalanceMode.Btc
       ? formatMoneyAmount({ moneyAmount: toBtcMoneyAmount(satsBalance) })
       : defaultFormattedBalance
+
+  const fiatEquivalent = moneyAmountToDisplayCurrencyString({
+    moneyAmount: toBtcMoneyAmount(satsBalance),
+    isApproximate: false,
+  })
 
   const accountId = dataAuthed?.me?.defaultAccount?.id
   const levelAccount = dataAuthed?.me?.defaultAccount.level
@@ -576,56 +605,6 @@ export const HomeScreen: React.FC = () => {
     | "sendBitcoinDestination"
     | "receiveBitcoin"
     | "conversionDetails"
-  type IconNamesType = keyof typeof icons
-
-  type HomeButton = {
-    title: string
-    target: Target
-    icon: IconNamesType
-    disabled?: boolean
-    onDisabledPress?: () => void
-  }
-
-  const buttons: HomeButton[] = [
-    {
-      title: LL.HomeScreen.receive(),
-      target: "receiveBitcoin",
-      icon: "receive",
-      disabled: receiveBlocked.isBlocked,
-      onDisabledPress: receiveBlocked.onDisabledPress,
-    },
-    {
-      title: LL.HomeScreen.send(),
-      target: "sendBitcoinDestination",
-      icon: "send",
-    },
-    {
-      title: LL.HomeScreen.scan(),
-      target: "scanningQRCode",
-      icon: "qr-code",
-    },
-  ]
-
-  const isIosWithBalance = isIos && satsBalance > 0
-
-  const shouldShowTransferButton =
-    !isTransferBlocked &&
-    (isSelfCustodial ||
-      !isIos ||
-      dataUnauthed?.globals?.network !== "mainnet" ||
-      levelAccount === AccountLevel.Two ||
-      levelAccount === AccountLevel.Three ||
-      isIosWithBalance)
-
-  if (shouldShowTransferButton) {
-    buttons.unshift({
-      title: LL.ConversionDetailsScreen.transfer(),
-      target: "conversionDetails",
-      icon: "transfer",
-      disabled: isDollarBalanceRestricted,
-      onDisabledPress: () => setIsRestrictionModalVisible(true),
-    })
-  }
 
   const AccountCreationNeededModal = (
     <Modal
@@ -636,13 +615,13 @@ export const HomeScreen: React.FC = () => {
       animationOutTiming={1}
       swipeThreshold={50}
     >
-      <View style={styles.flex}>
+      <View style={styles.modalFlex}>
         <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-          <View style={styles.cover} />
+          <View style={styles.modalCover} />
         </TouchableWithoutFeedback>
       </View>
       <View style={styles.viewModal}>
-        <GaloyIcon name="minus" size={64} color={colors.grey3} style={styles.icon} />
+        <GaloyIcon name="minus" size={64} color={colors.grey3} style={styles.modalIcon} />
         <Text type="h1">{LL.common.needWallet()}</Text>
         <View style={styles.openWalletContainer}>
           <GaloyPrimaryButton
@@ -650,7 +629,7 @@ export const HomeScreen: React.FC = () => {
             onPress={activateWallet}
           />
         </View>
-        <View style={styles.flex} />
+        <View style={styles.modalFlex} />
       </View>
     </Modal>
   )
@@ -659,8 +638,21 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate("profileScreen")
   }
 
+  const avatarInitial =
+    usernameTitle && usernameTitle !== LL.common.blinkUser()
+      ? usernameTitle[0]?.toUpperCase()
+      : null
+
+  const showBalanceInBtcMode =
+    showStableBalanceToggle && balanceMode === BalanceMode.Btc
+
+  const limitedTransactions = useMemo(
+    () => transactions.slice(0, 5),
+    [transactions],
+  )
+
   return (
-    <Screen headerShown={false}>
+    <Screen headerShown={false} backgroundColor="#0F0F11" statusBar="light-content">
       {AccountCreationNeededModal}
       <StableSatsModal
         isVisible={isStablesatModalVisible}
@@ -703,57 +695,9 @@ export const HomeScreen: React.FC = () => {
         deadlineTimestamp={migrateNowPrompt.deadlineTimestamp}
         timezone={migrateNowPrompt.timezone}
       />
-      <View style={styles.balanceContainer}>
-        <View style={styles.header}>
-          <GaloyIconButton
-            onPress={() => navigation.navigate("priceHistory")}
-            size={"medium"}
-            name="graph"
-            iconOnly={true}
-            weight="bold"
-          />
-          <View>
-            {!loading && usernameTitle && (
-              <Pressable onPress={canSwitchAccount ? handleSwitchPress : null}>
-                <View style={styles.profileContainer}>
-                  <Text type="p2">{usernameTitle}</Text>
-                  {canSwitchAccount && <GaloyIcon name={"caret-down"} size={18} />}
-                </View>
-              </Pressable>
-            )}
-          </View>
-          <GaloyIconButton
-            onPress={() => navigation.navigate("settings")}
-            size={"medium"}
-            name="menu"
-            iconOnly={true}
-            weight="bold"
-          />
-        </View>
-      </View>
-      <BalanceHeader
-        loading={loading}
-        formattedBalance={formattedBalance}
-        showStableBalanceToggle={showStableBalanceToggle}
-        mode={balanceMode}
-        onModeChange={toggleBalanceMode}
-      />
-      <View style={styles.badgeSlot}>
-        <UnseenTxAmountBadge
-          key={latestUnseenTx?.id}
-          amountText={unseenAmountText ?? ""}
-          visible={
-            isOutgoing
-              ? showOutgoingBadge
-              : showIncomingBadge && Boolean(unseenAmountText)
-          }
-          onPress={handleUnseenBadgePress}
-          isOutgoing={isOutgoing}
-        />
-      </View>
       <ScrollView
         {...testProps("home-screen")}
-        contentContainerStyle={styles.scrollViewContainer}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={loading && isFocused}
@@ -763,6 +707,152 @@ export const HomeScreen: React.FC = () => {
           />
         }
       >
+        {/* ─── HEADER ROW ─── */}
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <View style={styles.apBadge}>
+              <Text style={styles.apBadgeText}>AP</Text>
+              <View style={[styles.apBadgeDot, { backgroundColor: colors.primary }]} />
+            </View>
+            <Text style={styles.wordmark}>Afribit Pay</Text>
+          </View>
+          <Pressable onPress={canSwitchAccount ? handleSwitchPress : undefined}>
+            <View style={styles.avatarCircle}>
+              {avatarInitial ? (
+                <Text style={styles.avatarText}>{avatarInitial}</Text>
+              ) : (
+                <GaloyIcon name="user" size={18} color="#A8A39A" />
+              )}
+            </View>
+          </Pressable>
+        </View>
+
+        {/* ─── BALANCE SECTION ─── */}
+        <Pressable
+          onPress={showStableBalanceToggle ? toggleBalanceMode : undefined}
+        >
+          <View style={styles.balanceSection}>
+            <Text style={styles.balanceLabel}>Total balance</Text>
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceAmount}>
+                {showBalanceInBtcMode
+                  ? satsBalance.toLocaleString()
+                  : defaultFormattedBalance}
+              </Text>
+              {showBalanceInBtcMode && (
+                <Text style={styles.balanceUnit}> sats</Text>
+              )}
+            </View>
+            {fiatEquivalent && (
+              <Text style={styles.fiatEquivalent}>
+                ≈ {fiatEquivalent}
+              </Text>
+            )}
+          </View>
+        </Pressable>
+
+        {/* ─── ACTION BUTTONS ─── */}
+        <View style={styles.actionsRow}>
+          <Pressable
+            style={styles.actionButton}
+            onPress={() => onMenuClick("sendBitcoinDestination")}
+          >
+            <View style={styles.smallActionCircle}>
+              <GaloyIcon name="send" size={22} color="#F7F5F2" />
+            </View>
+            <Text style={styles.actionLabel}>Send</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.actionButton}
+            onPress={() => onMenuClick("scanningQRCode")}
+          >
+            <View style={[styles.largeActionCircle, { backgroundColor: colors.primary }]}>
+              <GaloyIcon name="scan" size={32} color="#F7F5F2" />
+            </View>
+            <Text style={styles.actionLabelPrimary}>Scan</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.actionButton}
+            onPress={() => onMenuClick("receiveBitcoin")}
+          >
+            <View style={styles.smallActionCircle}>
+              <GaloyIcon name="receive" size={22} color="#F7F5F2" />
+            </View>
+            <Text style={styles.actionLabel}>Receive</Text>
+          </Pressable>
+        </View>
+
+        {/* ─── BUY BITCOIN WITH M-PESA ─── */}
+        {/* No existing M-Pesa purchase flow is wired yet. Button is present
+            but non-functional until an on-ramp integration is added. */}
+        <Pressable style={styles.buyButton}>
+          <Text style={[styles.buyButtonPlus, { color: colors.primary }]}>+</Text>
+          <Text style={styles.buyButtonText}>Buy bitcoin with M-Pesa</Text>
+        </Pressable>
+
+        {/* ─── ACTIVITY SECTION ─── */}
+        <View style={styles.activityHeader}>
+          <Text style={styles.activityTitle}>Activity</Text>
+          <Pressable onPress={() => navigation.navigate("transactionHistory")}>
+            <Text style={styles.seeAllText}>See all</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.badgeSlot}>
+          <UnseenTxAmountBadge
+            key={latestUnseenTx?.id}
+            amountText={unseenAmountText ?? ""}
+            visible={
+              isOutgoing
+                ? showOutgoingBadge
+                : showIncomingBadge && Boolean(unseenAmountText)
+            }
+            onPress={handleUnseenBadgePress}
+            isOutgoing={isOutgoing}
+          />
+        </View>
+
+        {/* Transaction list */}
+        {limitedTransactions.map((tx) => (
+          <Pressable
+            key={tx.id}
+            style={styles.transactionRow}
+            onPress={() => navigation.navigate("transactionDetail", { txid: tx.id })}
+          >
+            <View style={styles.txIconSlot}>
+              <GaloyIcon
+                name={tx.direction === TxDirection.Receive ? "receive" : "send"}
+                size={20}
+                color={tx.direction === TxDirection.Receive ? colors.primary : "#F7F5F2"}
+              />
+            </View>
+            <View style={styles.txDetails}>
+              <Text style={styles.txName} numberOfLines={1}>
+                {tx.memo || getTxMethodLabel(tx)}
+              </Text>
+              <Text style={styles.txMeta} numberOfLines={1}>
+                {getTxMethodLabel(tx)}{" "}
+                <Text style={styles.txMeta}>· {timeAgo(tx.createdAt)}</Text>
+              </Text>
+            </View>
+            <Text
+              style={[
+                styles.txAmount,
+                tx.direction === TxDirection.Receive && styles.txAmountIncoming,
+              ]}
+            >
+              {tx.direction === TxDirection.Receive ? "+" : "−"}
+              {tx.settlementCurrency === WalletCurrency.Btc
+                ? tx.settlementAmount.toLocaleString()
+                : `$${(tx.settlementAmount / 100).toFixed(2)}`}
+            </Text>
+          </Pressable>
+        ))}
+
+        {/* ─── PRESERVED: Error, banners, bulletins, wallet overview ─── */}
+        {error && <GaloyErrorBox errorMessage={getErrorMessages(error)} />}
         <WalletOverview
           loading={loading}
           setIsStablesatModalVisible={setIsStablesatModalVisible}
@@ -771,28 +861,6 @@ export const HomeScreen: React.FC = () => {
           showBtcNotification={isOutgoing ? false : hasUnseenBtcTx}
           showUsdNotification={isOutgoing ? false : hasUnseenUsdTx}
         />
-        {error && <GaloyErrorBox errorMessage={getErrorMessages(error)} />}
-        <View style={styles.listItemsContainer}>
-          {buttons.map((item) => (
-            <React.Fragment key={item.icon}>
-              {item.icon === "qr-code" && <View style={styles.actionsSeparator} />}
-              <View style={styles.button}>
-                <DisabledFeature
-                  disabled={Boolean(item.disabled)}
-                  onDisabledPress={item.onDisabledPress}
-                >
-                  <GaloyIconButton
-                    name={item.icon}
-                    size="large"
-                    weight="regular"
-                    text={item.title}
-                    onPress={() => onMenuClick(item.target)}
-                  />
-                </DisabledFeature>
-              </View>
-            </React.Fragment>
-          ))}
-        </View>
         {isSelfCustodial && <UnclaimedDepositBanner />}
         <NetworkStatusBanner />
         {shouldShowBanner && <BackupNudgeBanner onDismiss={dismissBanner} />}
@@ -829,43 +897,32 @@ export const HomeScreen: React.FC = () => {
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  scrollViewContainer: {
+  scrollContent: {
+    paddingTop: 16,
     paddingHorizontal: 20,
-    paddingBottom: 20,
-    rowGap: 20,
+    paddingBottom: 26,
+    rowGap: 8,
   },
-  listItemsContainer: {
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    borderRadius: 12,
-    backgroundColor: colors.grey5,
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    columnGap: 12,
-  },
-  noTransaction: {
-    alignItems: "center",
-  },
-  icon: {
-    height: 34,
-    top: -22,
-  },
+
+  // ── MODAL (preserved structure, dark background) ──
   modal: {
     marginBottom: 0,
     marginHorizontal: 0,
   },
-  flex: {
+  modalFlex: {
     flex: 1,
   },
-  cover: {
+  modalCover: {
     height: "100%",
     width: "100%",
   },
+  modalIcon: {
+    height: 34,
+    top: -22,
+  },
   viewModal: {
     alignItems: "center",
-    backgroundColor: colors.white,
+    backgroundColor: "#1C1C20",
     height: "30%",
     justifyContent: "flex-end",
     paddingHorizontal: 20,
@@ -874,57 +931,217 @@ const useStyles = makeStyles(({ colors }) => ({
     alignSelf: "stretch",
     marginTop: 20,
   },
-  recentTransaction: {
-    display: "flex",
+
+  // ── HEADER ──
+  headerRow: {
     flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    columnGap: 10,
-    backgroundColor: colors.grey5,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    borderColor: colors.grey5,
-    borderBottomWidth: 2,
-    paddingVertical: 14,
-  },
-  button: {
-    maxWidth: "25%",
-    flexGrow: 1,
-    alignItems: "center",
-  },
-  balanceContainer: {
-    marginTop: 7,
-    flexDirection: "column",
-    flex: 1,
-    height: 40,
-    maxHeight: 40,
-  },
-  header: {
-    flexDirection: "row",
-    flex: 1,
     justifyContent: "space-between",
     alignItems: "center",
-    marginHorizontal: 20,
-    marginTop: 6,
   },
-  error: {
-    alignSelf: "center",
-    color: colors.error,
-  },
-  profileContainer: {
+  headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 10,
   },
-  actionsSeparator: {
-    width: 1,
-    alignSelf: "stretch",
-    backgroundColor: colors.grey4,
-  },
-  badgeSlot: {
-    height: 35,
-    marginVertical: 3,
+  apBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    backgroundColor: "#1C1C20",
     justifyContent: "center",
     alignItems: "center",
+    position: "relative",
+  },
+  apBadgeText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#F7F5F2",
+  },
+  apBadgeDot: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    width: 11,
+    height: 11,
+    borderRadius: 4,
+  },
+  wordmark: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#F7F5F2",
+  },
+  avatarCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#1C1C20",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#A8A39A",
+  },
+
+  // ── BALANCE ──
+  balanceSection: {
+    marginTop: 30,
+    alignItems: "flex-start",
+  },
+  balanceLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#A8A39A",
+  },
+  balanceRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginTop: 2,
+  },
+  balanceAmount: {
+    fontSize: 46,
+    fontWeight: "800",
+    color: "#F7F5F2",
+  },
+  balanceUnit: {
+    fontSize: 19,
+    fontWeight: "700",
+    color: "#A8A39A",
+  },
+  fiatEquivalent: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#A8A39A",
+    marginTop: 2,
+  },
+
+  // ── ACTION BUTTONS ──
+  actionsRow: {
+    marginTop: 22,
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "flex-end",
+  },
+  actionButton: {
+    alignItems: "center",
+    gap: 8,
+  },
+  smallActionCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "rgba(255,255,255,.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,.12)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  largeActionCircle: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  actionLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#F7F5F2",
+  },
+  actionLabelPrimary: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#F7F5F2",
+  },
+
+  // ── BUY BUTTON ──
+  buyButton: {
+    marginTop: 18,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,.06)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,.12)",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  buyButtonPlus: {
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  buyButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#F7F5F2",
+  },
+
+  // ── ACTIVITY ──
+  activityHeader: {
+    marginTop: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  activityTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#F7F5F2",
+  },
+  seeAllText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#A8A39A",
+  },
+
+  badgeSlot: {
+    height: 35,
+    justifyContent: "flex-start",
+    alignItems: "center",
+  },
+
+  transactionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  txIconSlot: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,.06)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  txDetails: {
+    flex: 1,
+    marginLeft: 12,
+    marginRight: 12,
+  },
+  txName: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#F7F5F2",
+  },
+  txMeta: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#A8A39A",
+    marginTop: 2,
+  },
+  txAmount: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#F7F5F2",
+  },
+  txAmountIncoming: {
+    color: colors.primary,
   },
 }))

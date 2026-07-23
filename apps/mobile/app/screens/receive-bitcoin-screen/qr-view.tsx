@@ -15,7 +15,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import { runOnJS } from "react-native-reanimated"
 import QRCode from "react-native-qrcode-svg"
 
-import Logo from "@app/assets/logo/blink-logo-icon.png"
+import Logo from "@app/assets/logo/afribit/afribit-monogram-qr.png"
 import { usePressScale } from "@app/components/animations"
 import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { GaloyTertiaryButton } from "@app/components/atomic/galoy-tertiary-button"

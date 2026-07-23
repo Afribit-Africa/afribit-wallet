@@ -12,8 +12,8 @@ import { updateDeviceSessionCount } from "@app/graphql/client-only-query"
 
 import { useUnlockScreen } from "./unlock-screen"
 
-import AppLogoDarkMode from "../../assets/logo/app-logo-dark.svg"
-import AppLogoLightMode from "../../assets/logo/blink-logo-light.svg"
+import AppLogoDarkMode from "../../assets/logo/afribit/afribit-lockup-horizontal-white.svg"
+import AppLogoLightMode from "../../assets/logo/afribit/afribit-lockup-horizontal.svg"
 import { Screen } from "../../components/screen"
 import type { RootStackParamList } from "../../navigation/stack-param-lists"
 import BiometricWrapper from "../../utils/biometricAuthentication"

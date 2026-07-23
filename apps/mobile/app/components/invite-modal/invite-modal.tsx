@@ -12,7 +12,7 @@ import QRCode from "react-native-qrcode-svg"
 import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 
 import { gql } from "@apollo/client"
-import Logo from "@app/assets/logo/blink-logo-icon.png"
+import Logo from "@app/assets/logo/afribit/afribit-monogram-qr.png"
 import { getInviteLink } from "@app/config/appinfo"
 import { useInviteQuery } from "@app/graphql/generated"
 import { useClipboard } from "@app/hooks"

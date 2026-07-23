@@ -17,12 +17,12 @@ const light = {
 
   // adjusted
   white: "#FFFFFF",
-  black: "#000000",
+  black: "#171713",
 
-  primary: "#fc5805",
-  primary3: "#fd800b",
-  primary4: "#fe990d",
-  primary5: "#ffad0d",
+  primary: "#EE901C",
+  primary3: "#EFB121",
+  primary4: "#F0C623",
+  primary5: "#F1D823",
 
   blue5: "#4453E2",
 
@@ -68,13 +68,13 @@ const dark = {
   _warningLight: "#FFF9E5",
 
   // adjusted
-  white: "#000000",
+  white: "#171713",
   black: "#FFFFFF",
 
-  primary: "#ffad0d",
-  primary3: "#fe990d",
-  primary4: "#fd800b",
-  primary5: "#fc5805",
+  primary: "#F1D823",
+  primary3: "#F0C623",
+  primary4: "#EFB121",
+  primary5: "#EE901C",
 
   blue5: "#F0F0F7",
 

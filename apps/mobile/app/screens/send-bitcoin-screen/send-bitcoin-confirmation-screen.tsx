@@ -403,8 +403,36 @@ const SendBitcoinConfirmationScreen: React.FC<Props> = ({ route }) => {
   )
 
   return (
-    <Screen preset="scroll" style={styles.screenStyle} keyboardOffset="navigationHeader">
+    <Screen preset="scroll" style={styles.screenStyle} backgroundColor={colors.white} keyboardOffset="navigationHeader">
       <View style={styles.sendBitcoinConfirmationContainer}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          hitSlop={12}
+        >
+          <GaloyIcon name="arrow-left" size={22} color={colors.black} />
+        </TouchableOpacity>
+        <View style={styles.paymentInfoSection}>
+          <Text style={styles.payingLabel}>You're paying</Text>
+          <Text style={styles.recipientText} numberOfLines={3}>
+            {destination}
+          </Text>
+          <View style={styles.paymentTypePill}>
+            <Text style={styles.paymentTypePillText}>
+              Paying via {transactionType()}
+            </Text>
+          </View>
+          <View style={styles.amountDisplayContainer}>
+            <View style={styles.amountRow}>
+              <Text style={styles.amountValue}>{currencyAmount}</Text>
+            </View>
+            {satAmount && (
+              <Text style={styles.amountSecondary}>
+                {satAmount}
+              </Text>
+            )}
+          </View>
+        </View>
         <View style={styles.fieldContainer}>
           <Text style={styles.fieldTitleText}>
             {LL.SendBitcoinScreen.destination()} - {transactionType()}
@@ -559,6 +587,68 @@ const useStyles = makeStyles(({ colors }) => ({
   sendBitcoinConfirmationContainer: {
     flex: 1,
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.grey5,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 20,
+    marginTop: 4,
+    marginBottom: 20,
+  },
+  paymentInfoSection: {
+    paddingHorizontal: 20,
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  payingLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.grey3,
+    marginBottom: 6,
+  },
+  recipientText: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: colors.black,
+    textAlign: "center",
+    marginBottom: 10,
+    lineHeight: 24,
+  },
+  paymentTypePill: {
+    backgroundColor: colors.backdropWhite,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    marginBottom: 16,
+  },
+  paymentTypePillText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.primary,
+  },
+  amountDisplayContainer: {
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  amountRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+  },
+  amountValue: {
+    fontSize: 42,
+    fontWeight: "800",
+    color: colors.black,
+    textAlign: "center",
+  },
+  amountSecondary: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: colors.grey3,
+    marginTop: 2,
+  },
   fieldContainer: {
     paddingHorizontal: 20,
     marginBottom: 12,
@@ -583,6 +673,7 @@ const useStyles = makeStyles(({ colors }) => ({
   fieldTitleText: {
     fontWeight: "bold",
     marginBottom: 4,
+    color: colors.grey3,
   },
   walletSelectorTypeContainer: {
     justifyContent: "center",
@@ -600,6 +691,7 @@ const useStyles = makeStyles(({ colors }) => ({
   walletCurrencyText: {
     fontWeight: "bold",
     fontSize: 18,
+    color: colors.black,
   },
   walletSelectorBalanceContainer: {
     flex: 1,
@@ -630,7 +722,6 @@ const useStyles = makeStyles(({ colors }) => ({
     alignItems: "center",
   },
   screenStyle: {
-    paddingTop: 20,
     flexGrow: 1,
   },
   iconContainer: {

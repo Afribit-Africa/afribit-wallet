@@ -27,8 +27,6 @@ import { makeStyles, Text, useTheme } from "@rn-vui/themed"
 import { testProps } from "../../utils/testProps"
 import { SuggestionModal } from "./suggestion-modal"
 import { PaymentSendCompletedStatus } from "./use-send-payment"
-import LogoLightMode from "@app/assets/logo/afribit/afribit-lockup-horizontal.svg"
-import LogoDarkMode from "@app/assets/logo/afribit/afribit-lockup-horizontal-white.svg"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { SuccessActionTag } from "@app/components/success-action/success-action"
 import { LNURLPaySuccessAction, utils } from "lnurl-pay"
@@ -320,9 +318,7 @@ const SendBitcoinCompletedScreen: React.FC<Props> = ({ route }) => {
   } = route.params
 
   const styles = useStyles()
-  const {
-    theme: { mode },
-  } = useTheme()
+  const { colors } = useTheme().theme
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, "sendBitcoinCompleted">>()
   const { LL } = useI18nContext()
@@ -334,9 +330,7 @@ const SendBitcoinCompletedScreen: React.FC<Props> = ({ route }) => {
   const status = processStatus({ arrivalAtMempoolEstimate, status: statusRaw })
   const usernameTitle = data?.me?.username || LL.common.blinkUser()
   const successActionMessage = useSuccessMessage(successAction, preimage)
-  /** The Note shows the LNURL success action if present, otherwise the payment memo. */
   const noteMessage = successActionMessage || note?.trim() || ""
-  const Logo = mode === "dark" ? LogoDarkMode : LogoLightMode
 
   const { requestFeedback, showSuggestionModal, setShowSuggestionModal } =
     useFeedbackHandler()
@@ -358,9 +352,21 @@ const SendBitcoinCompletedScreen: React.FC<Props> = ({ route }) => {
 
   const handleNavigateHome = () => navigation.navigate("Primary")
 
+  const paymentRailLabel = String(
+    paymentType === PaymentType.Intraledger
+      ? LL.common.blinkToBlink()
+      : paymentType === "lightning" || paymentType === "lnurl"
+        ? LL.common.lightning()
+        : paymentType === "onchain"
+          ? LL.common.onchain()
+          : paymentType === "spark"
+            ? LL.common.spark()
+            : paymentType ?? "",
+  )
+
   if (showSuccessIcon) {
     return (
-      <Screen headerShown={false}>
+      <Screen headerShown={false} backgroundColor={colors.white}>
         <SuccessIconComponent
           status={status}
           arrivalAtMempoolEstimate={arrivalAtMempoolEstimate}
@@ -370,7 +376,7 @@ const SendBitcoinCompletedScreen: React.FC<Props> = ({ route }) => {
   }
 
   return (
-    <Screen headerShown={false}>
+    <Screen headerShown={false} backgroundColor={colors.white}>
       <HeaderSection
         isTakingScreenshot={isTakingScreenshot}
         onClose={handleNavigateHome}
@@ -378,7 +384,21 @@ const SendBitcoinCompletedScreen: React.FC<Props> = ({ route }) => {
 
       <ViewShot ref={viewRef} style={styles.viewShot}>
         <View style={styles.screenContainer}>
-          <Logo height={110} />
+          <View style={styles.successIconCircle}>
+            {/* Fixed white, not a theme token: sits on the solid colors.primary
+                circle, so it must stay readable regardless of theme. */}
+            <GaloyIcon name="check" size={34} color="#FFFFFF" />
+          </View>
+          <Text style={styles.paymentSentHeadline}>Payment sent</Text>
+          <View style={styles.completedAmountRow}>
+            <Text style={styles.completedAmountValue}>{currencyAmount}</Text>
+          </View>
+          {destination ? (
+            <Text style={styles.completedRecipientDetail}>
+              to {destination}{" "}
+              {paymentType ? `\u00b7 ${paymentRailLabel}` : ""}
+            </Text>
+          ) : null}
 
           <View style={styles.container}>
             <ScrollView>
@@ -409,6 +429,15 @@ const SendBitcoinCompletedScreen: React.FC<Props> = ({ route }) => {
         </View>
       </ViewShot>
 
+      {!isTakingScreenshot && (
+        <GaloyPrimaryButton
+          style={styles.doneButton}
+          onPress={handleNavigateHome}
+          title="Done"
+          underlayColor="transparent"
+        />
+      )}
+
       <SuggestionModal
         navigation={navigation}
         showSuggestionModal={showSuggestionModal}
@@ -434,6 +463,44 @@ const useStyles = makeStyles(({ colors }) => ({
     flexGrow: 1,
     backgroundColor: colors.white,
   },
+  successIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  paymentSentHeadline: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: colors.black,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  completedAmountRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "baseline",
+    marginBottom: 4,
+  },
+  completedAmountValue: {
+    fontSize: 38,
+    fontWeight: "800",
+    color: colors.black,
+    textAlign: "center",
+  },
+  completedRecipientDetail: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: colors.grey3,
+    textAlign: "center",
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
   completedText: {
     textAlign: "center",
     marginTop: 20,
@@ -442,12 +509,16 @@ const useStyles = makeStyles(({ colors }) => ({
   container: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
     marginTop: 20,
   },
   shareButton: {
     marginTop: 10,
     marginBottom: 20,
+  },
+  doneButton: {
+    marginTop: 8,
+    marginBottom: 20,
+    marginHorizontal: 20,
   },
   successActionFieldContainer: {
     overflow: "hidden",

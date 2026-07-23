@@ -25,8 +25,8 @@ This roadmap is sequenced deliberately: nothing that touches real money happens 
 - [ ] KE-QR parsing: recognize till, paybill, and send-money QR formats — v1 done (2026-07-23): generic EMVCo/Safaricom KE-QR detection + "Detected automatically" sheet on the Scan screen; does not yet distinguish till vs. paybill vs. send-money sub-types
 - [x] Lightning invoice/address recognition in the same scan flow (already existed, now shown via the same detected-sheet UI as KE-QR)
 - [ ] Payout engine: rate quoting, sats debit, idempotency — built and tested entirely in sandbox — not started; scanning a KE-QR today shows an honest "coming soon" state instead
-- [ ] Resolve Splice Africa vs. IntaSend vs. direct Daraja, based on direct conversations, not assumptions
-- [ ] Confirm the Splice/Tando ownership question before treating Splice as a settled vendor choice
+- [ ] Resolve Splice Africa vs. IntaSend vs. direct Daraja, based on direct conversations, not assumptions — desk research done, see `docs/OFFRAMP_RESEARCH.md` (2026-07-24): IntaSend has the best-documented match (explicit till/paybill B2B API) but a flat KES 100/payout fee worth negotiating; Splice's public docs don't evidence M-Pesa support at all; direct Daraja confirmed as the slow/heavy fallback (sequential KYC cycles, 2-4+ weeks). Still needs the actual conversations - this is research, not a decision.
+- [ ] Confirm the Splice/Tando ownership question before treating Splice as a settled vendor choice — still unconfirmed either way after research; also surfaced that Tando (a live Lightning-to-M-Pesa bridge) may be worth an exploratory partnership conversation given how closely it overlaps this phase's goal
 
 ## Phase 4 — Compliance and structure
 - [ ] Formal legal read: VASP classification for the off-ramp specifically

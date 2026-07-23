@@ -69,8 +69,8 @@ Kenya's Virtual Asset Service Providers Act (2025) is in force; draft VASP Regul
 
 ## 10. Open questions
 
-- **Off-ramp infrastructure**: Splice Africa vs. IntaSend — pending direct conversations on crypto-business tolerance and real settlement speed. Direct Safaricom Daraja remains a fallback.
+- **Off-ramp infrastructure**: Splice Africa vs. IntaSend — pending direct conversations on crypto-business tolerance and real settlement speed. Direct Safaricom Daraja remains a fallback. Desk research complete, see `docs/OFFRAMP_RESEARCH.md` (2026-07-24) — does not replace the direct conversations still needed.
 - **Entity structure**: whether the off-ramp needs a legal entity separate from Afribit's existing structure.
 - **Funding**: float capital not yet secured; sized to realistic pilot transaction volumes rather than large-scale assumptions.
-- **Tando relationship**: partnership conversation not yet had; building in-house regardless, per prior decision.
-- **Splice/Tando acquisition claim**: reported but unverified — confirm before treating Splice as a fully independent vendor relationship.
+- **Tando relationship**: partnership conversation not yet had; building in-house regardless, per prior decision. Worth revisiting given how directly Tando's live product overlaps this phase's goal (see off-ramp research doc).
+- **Splice/Tando acquisition claim**: reported but unverified — confirm before treating Splice as a fully independent vendor relationship. Public research found nothing either way; still needs a direct question.

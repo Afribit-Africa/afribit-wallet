@@ -73,12 +73,15 @@ const useStyles = makeStyles(({ colors }, { isOutgoing }: { isOutgoing?: boolean
     alignSelf: "center",
   },
   badge: {
-    borderRadius: 8,
-    paddingHorizontal: 20,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     alignSelf: "center",
+    backgroundColor: colors.grey5,
   },
   text: {
-    fontSize: 20,
-    color: isOutgoing ? colors.grey2 : colors._green,
+    fontSize: 15,
+    fontWeight: "700",
+    color: isOutgoing ? colors.grey2 : colors.primary,
   },
 }))

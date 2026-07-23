@@ -26,7 +26,8 @@ import { StableTokenConvertToBtcModal } from "@app/screens/conversion-flow/stabl
 import { TrialAccountLimitsModal } from "@app/components/upgrade-account-modal"
 import SlideUpHandle from "@app/components/slide-up-handle"
 import { Screen } from "@app/components/screen"
-import AfribitMonogram from "@app/assets/logo/afribit/afribit-monogram-white.svg"
+import AfribitMonogramWhite from "@app/assets/logo/afribit/afribit-monogram-white.svg"
+import AfribitMonogramBlack from "@app/assets/logo/afribit/afribit-monogram-black.svg"
 import {
   UnseenTxAmountBadge,
   useUnseenTxAmountBadge,
@@ -209,8 +210,9 @@ const getTxMethodLabel = (tx: TransactionFragment): string => {
 export const HomeScreen: React.FC = () => {
   const styles = useStyles()
   const {
-    theme: { colors },
+    theme: { colors, mode },
   } = useTheme()
+  const AfribitMonogram = mode === "dark" ? AfribitMonogramWhite : AfribitMonogramBlack
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { balanceLimitToTriggerUpgradeModal, upgradeModalCooldownDays } =
     useRemoteConfig()
@@ -648,7 +650,11 @@ export const HomeScreen: React.FC = () => {
   const limitedTransactions = useMemo(() => transactions.slice(0, 5), [transactions])
 
   return (
-    <Screen headerShown={false} backgroundColor="#0F0F11" statusBar="light-content">
+    <Screen
+      headerShown={false}
+      backgroundColor={colors.white}
+      statusBar={mode === "dark" ? "light-content" : "dark-content"}
+    >
       {AccountCreationNeededModal}
       <StableSatsModal
         isVisible={isStablesatModalVisible}
@@ -719,14 +725,14 @@ export const HomeScreen: React.FC = () => {
               name="graph"
               iconOnly={true}
               weight="bold"
-              color="#F7F5F2"
+              color={colors.black}
             />
             <Pressable onPress={handleSwitchPress}>
               <View style={styles.avatarCircle}>
                 {avatarInitial ? (
                   <Text style={styles.avatarText}>{avatarInitial}</Text>
                 ) : (
-                  <GaloyIcon name="user" size={18} color="#A8A39A" />
+                  <GaloyIcon name="user" size={18} color={colors.grey3} />
                 )}
               </View>
             </Pressable>
@@ -758,7 +764,7 @@ export const HomeScreen: React.FC = () => {
             onPress={() => onMenuClick("sendBitcoinDestination")}
           >
             <View style={styles.smallActionCircle}>
-              <GaloyIcon name="send" size={22} color="#F7F5F2" />
+              <GaloyIcon name="send" size={22} color={colors.black} />
             </View>
             <Text style={styles.actionLabel}>Send</Text>
           </Pressable>
@@ -768,6 +774,8 @@ export const HomeScreen: React.FC = () => {
             onPress={() => onMenuClick("scanningQRCode")}
           >
             <View style={[styles.largeActionCircle, { backgroundColor: colors.primary }]}>
+              {/* Fixed off-white, not a theme token: this icon always sits on the
+                  solid primary-orange circle, independent of light/dark mode. */}
               <GaloyIcon name="scan" size={32} color="#F7F5F2" />
             </View>
             <Text style={styles.actionLabelPrimary}>Scan</Text>
@@ -778,7 +786,7 @@ export const HomeScreen: React.FC = () => {
             onPress={() => onMenuClick("receiveBitcoin")}
           >
             <View style={styles.smallActionCircle}>
-              <GaloyIcon name="receive" size={22} color="#F7F5F2" />
+              <GaloyIcon name="receive" size={22} color={colors.black} />
             </View>
             <Text style={styles.actionLabel}>Receive</Text>
           </Pressable>
@@ -825,7 +833,7 @@ export const HomeScreen: React.FC = () => {
               <GaloyIcon
                 name={tx.direction === TxDirection.Receive ? "receive" : "send"}
                 size={20}
-                color={tx.direction === TxDirection.Receive ? colors.primary : "#F7F5F2"}
+                color={tx.direction === TxDirection.Receive ? colors.primary : colors.black}
               />
             </View>
             <View style={styles.txDetails}>
@@ -914,7 +922,7 @@ const useStyles = makeStyles(({ colors }) => ({
   },
   viewModal: {
     alignItems: "center",
-    backgroundColor: "#1C1C20",
+    backgroundColor: colors.grey5,
     height: "30%",
     justifyContent: "flex-end",
     paddingHorizontal: 20,
@@ -944,7 +952,7 @@ const useStyles = makeStyles(({ colors }) => ({
     width: 38,
     height: 38,
     borderRadius: 11,
-    backgroundColor: "#1C1C20",
+    backgroundColor: colors.grey5,
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
@@ -960,20 +968,20 @@ const useStyles = makeStyles(({ colors }) => ({
   wordmark: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#F7F5F2",
+    color: colors.black,
   },
   avatarCircle: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#1C1C20",
+    backgroundColor: colors.grey5,
     justifyContent: "center",
     alignItems: "center",
   },
   avatarText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#A8A39A",
+    color: colors.grey3,
   },
 
   // ── BALANCE ──
@@ -984,7 +992,7 @@ const useStyles = makeStyles(({ colors }) => ({
   balanceLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#A8A39A",
+    color: colors.grey3,
   },
   balanceRow: {
     flexDirection: "row",
@@ -994,17 +1002,17 @@ const useStyles = makeStyles(({ colors }) => ({
   balanceAmount: {
     fontSize: 46,
     fontWeight: "800",
-    color: "#F7F5F2",
+    color: colors.black,
   },
   balanceUnit: {
     fontSize: 19,
     fontWeight: "700",
-    color: "#A8A39A",
+    color: colors.grey3,
   },
   fiatEquivalent: {
     fontSize: 15,
     fontWeight: "500",
-    color: "#A8A39A",
+    color: colors.grey3,
     marginTop: 2,
   },
 
@@ -1023,9 +1031,9 @@ const useStyles = makeStyles(({ colors }) => ({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: "rgba(255,255,255,.06)",
+    backgroundColor: colors.backdropWhite,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,.12)",
+    borderColor: colors.backdropWhiter,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1044,12 +1052,12 @@ const useStyles = makeStyles(({ colors }) => ({
   actionLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#F7F5F2",
+    color: colors.black,
   },
   actionLabelPrimary: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#F7F5F2",
+    color: colors.black,
   },
 
   // ── BUY BUTTON ──
@@ -1057,9 +1065,9 @@ const useStyles = makeStyles(({ colors }) => ({
     marginTop: 18,
     height: 52,
     borderRadius: 16,
-    backgroundColor: "rgba(255,255,255,.06)",
+    backgroundColor: colors.backdropWhite,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,.12)",
+    borderColor: colors.backdropWhiter,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
@@ -1072,7 +1080,7 @@ const useStyles = makeStyles(({ colors }) => ({
   buyButtonText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#F7F5F2",
+    color: colors.black,
   },
 
   // ── ACTIVITY ──
@@ -1085,12 +1093,12 @@ const useStyles = makeStyles(({ colors }) => ({
   activityTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#F7F5F2",
+    color: colors.black,
   },
   seeAllText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#A8A39A",
+    color: colors.grey3,
   },
 
   badgeSlot: {
@@ -1108,7 +1116,7 @@ const useStyles = makeStyles(({ colors }) => ({
     width: 42,
     height: 42,
     borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,.06)",
+    backgroundColor: colors.backdropWhite,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -1120,18 +1128,18 @@ const useStyles = makeStyles(({ colors }) => ({
   txName: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#F7F5F2",
+    color: colors.black,
   },
   txMeta: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#A8A39A",
+    color: colors.grey3,
     marginTop: 2,
   },
   txAmount: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#F7F5F2",
+    color: colors.black,
   },
   txAmountIncoming: {
     color: colors.primary,

@@ -62,6 +62,11 @@ async function main() {
   }
 
   // ── Full launcher icons (ic_launcher.png and ic_launcher_round.png) ──
+  // These are the LEGACY flat icons for launchers that don't support
+  // adaptive-icon (pre-Android 8, or third-party launchers that ignore it).
+  // Unlike the foreground layer above, they must be fully opaque - there is
+  // no separate background layer for the OS to composite behind them - so
+  // the brand near-black is baked in here, not left transparent.
   const fullIconTargets = [
     { dir: "mipmap-mdpi", size: 48 },
     { dir: "mipmap-hdpi", size: 72 },
@@ -69,22 +74,38 @@ async function main() {
     { dir: "mipmap-xxhdpi", size: 144 },
     { dir: "mipmap-xxxhdpi", size: 192 },
   ];
+  const launcherBg = { r: 0x17, g: 0x17, b: 0x13, alpha: 1 };
+
+  async function rasterizeFlatIconWithBg(inputSvg, outputPng, canvasSize, iconPct) {
+    const iconSize = Math.round(canvasSize * iconPct);
+    const iconBuf = await sharp(inputSvg)
+      .resize(iconSize, iconSize, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .png()
+      .toBuffer();
+    const offset = Math.floor((canvasSize - iconSize) / 2);
+    await sharp({
+      create: { width: canvasSize, height: canvasSize, channels: 4, background: launcherBg },
+    })
+      .composite([{ input: iconBuf, left: offset, top: offset }])
+      .png()
+      .toFile(outputPng);
+  }
 
   for (const t of fullIconTargets) {
-    await rasterizeSvg(
+    await rasterizeFlatIconWithBg(
       monogramSvg,
       path.join(resDir, t.dir, "ic_launcher.png"),
       t.size,
-      t.size,
+      0.63,
     );
-    await rasterizeSvg(
+    await rasterizeFlatIconWithBg(
       monogramSvg,
       path.join(resDir, t.dir, "ic_launcher_round.png"),
       t.size,
-      t.size,
+      0.63,
     );
-    console.log(`✓ ${t.dir}/ic_launcher.png (${t.size}x${t.size})`);
-    console.log(`✓ ${t.dir}/ic_launcher_round.png (${t.size}x${t.size})`);
+    console.log(`✓ ${t.dir}/ic_launcher.png (${t.size}x${t.size}, opaque bg)`);
+    console.log(`✓ ${t.dir}/ic_launcher_round.png (${t.size}x${t.size}, opaque bg)`);
   }
 
   // ── QR code logo PNG (for use inside QR codes) ──

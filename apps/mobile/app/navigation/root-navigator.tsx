@@ -1092,44 +1092,8 @@ export const PrimaryNavigator = () => {
           tabBarIcon: ({ color }: { color: string }) => (
             <HomeIcon {...testProps("Home")} fill={color} color={color} />
           ),
+          tabBarStyle: { display: "none" },
           headerShown: false,
-        }}
-      />
-      <Tab.Screen
-        name="People"
-        component={ContactNavigator}
-        options={{
-          headerShown: false,
-          title: LL.PeopleScreen.title(),
-          tabBarAccessibilityLabel: LL.PeopleScreen.title(),
-          tabBarButtonTestID: LL.PeopleScreen.title(),
-          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => (
-            <PeopleTabIcon color={color} focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Map"
-        component={MapScreen}
-        options={{
-          title: LL.MapScreen.title(),
-          headerShown: false,
-          tabBarAccessibilityLabel: LL.MapScreen.title(),
-          tabBarButtonTestID: LL.MapScreen.title(),
-          tabBarIcon: ({ color }: { color: string }) => <MapIcon color={color} />,
-        }}
-      />
-      <Tab.Screen
-        name="Earn"
-        component={EarnMapScreen}
-        options={{
-          title: LL.EarnScreen.title(),
-          headerShown: false,
-          tabBarAccessibilityLabel: LL.EarnScreen.title(),
-          tabBarButtonTestID: LL.EarnScreen.title(),
-          tabBarIcon: ({ color }: { color: string }) => (
-            <LearnIcon {...testProps("Earn")} color={color} />
-          ),
         }}
       />
     </Tab.Navigator>

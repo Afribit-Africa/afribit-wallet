@@ -69,8 +69,9 @@ Kenya's Virtual Asset Service Providers Act (2025) is in force; draft VASP Regul
 
 ## 10. Open questions
 
-- **Off-ramp infrastructure**: Splice Africa vs. IntaSend — pending direct conversations on crypto-business tolerance and real settlement speed. Direct Safaricom Daraja remains a fallback. Desk research complete, see `docs/OFFRAMP_RESEARCH.md` (2026-07-24) — does not replace the direct conversations still needed.
+- **Off-ramp infrastructure**: **Decided 2026-07-24 — direct Safaricom Daraja API.** Registration steps and technical shape in `docs/DARAJA_INTEGRATION.md`. Realistic timeline is 2-4 weeks for production access (business KYC + shortcode + API approval, sequentially); sandbox development doesn't need to wait on any of it.
 - **Entity structure**: whether the off-ramp needs a legal entity separate from Afribit's existing structure.
 - **Funding**: float capital not yet secured; sized to realistic pilot transaction volumes rather than large-scale assumptions.
-- **Tando relationship**: partnership conversation not yet had; building in-house regardless, per prior decision. Worth revisiting given how directly Tando's live product overlaps this phase's goal (see off-ramp research doc).
-- **Splice/Tando acquisition claim**: reported but unverified — confirm before treating Splice as a fully independent vendor relationship. Public research found nothing either way; still needs a direct question.
+- **Callback backend**: Daraja's B2C/B2B APIs are asynchronous and require an HTTPS `ResultURL`/`QueueTimeOutURL` to receive outcomes — this app has no backend server today. A small always-on endpoint needs to exist before the off-ramp can work end-to-end, not just the mobile-side integration.
+- **Tando relationship**: partnership conversation not yet had; building in-house regardless, per prior decision. Lower priority now that a vendor path (Daraja) is chosen, but the overlap with Tando's live product is still worth knowing about.
+- **Splice/Tando acquisition claim**: no longer blocking now that Daraja is the chosen vendor — left unresolved.

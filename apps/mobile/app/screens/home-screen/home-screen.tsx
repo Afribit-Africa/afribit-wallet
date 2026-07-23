@@ -11,13 +11,13 @@ import { ScrollView, TouchableWithoutFeedback } from "react-native-gesture-handl
 import { AppUpdate } from "@app/components/app-update/app-update"
 import { GaloyErrorBox } from "@app/components/atomic/galoy-error-box"
 import { GaloyIcon } from "@app/components/atomic/galoy-icon"
+import { GaloyIconButton } from "@app/components/atomic/galoy-icon-button"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { BulletinsCard } from "@app/components/notifications/bulletins"
 import { SetDefaultAccountModal } from "@app/components/set-default-account-modal"
 import { StableSatsModal } from "@app/components/stablesats-modal"
 import { DollarBalanceRestrictionModal } from "@app/components/dollar-balance-restriction-modal"
 import { UsdConvertToBtcModal } from "@app/components/usd-convert-to-btc-modal"
-import WalletOverview from "@app/components/wallet-overview/wallet-overview"
 import { useTotalBalance } from "@app/components/balance-header"
 import { BalanceMode, useBalanceMode } from "@app/hooks/use-balance-mode"
 import { useDisplayCurrency } from "@app/hooks/use-display-currency"
@@ -26,6 +26,7 @@ import { StableTokenConvertToBtcModal } from "@app/screens/conversion-flow/stabl
 import { TrialAccountLimitsModal } from "@app/components/upgrade-account-modal"
 import SlideUpHandle from "@app/components/slide-up-handle"
 import { Screen } from "@app/components/screen"
+import AfribitMonogram from "@app/assets/logo/afribit/afribit-monogram-white.svg"
 import {
   UnseenTxAmountBadge,
   useUnseenTxAmountBadge,
@@ -221,7 +222,7 @@ export const HomeScreen: React.FC = () => {
   const toggleSetDefaultAccountModal = () =>
     setSetDefaultAccountModalVisible(!setDefaultAccountModalVisible)
 
-  const { isAtLeastLevelOne } = useLevel()
+  const { isAtLeastLevelOne: _isAtLeastLevelOne } = useLevel()
 
   const isAuthed = useIsAuthed()
   const activeWallet = useActiveWallet()
@@ -318,7 +319,6 @@ export const HomeScreen: React.FC = () => {
   const usernameTitle = isSelfCustodial
     ? selfCustodialUsername ?? selfCustodialFallbackTitle
     : username || phone || LL.common.blinkUser()
-  const canSwitchAccount = isSelfCustodial ? hasMultipleAccounts : isAtLeastLevelOne
 
   const wallets = isSelfCustodial
     ? activeWallet.wallets.map((w) => ({
@@ -635,7 +635,7 @@ export const HomeScreen: React.FC = () => {
   )
 
   const handleSwitchPress = () => {
-    navigation.navigate("profileScreen")
+    navigation.navigate("settings")
   }
 
   const avatarInitial =
@@ -643,13 +643,9 @@ export const HomeScreen: React.FC = () => {
       ? usernameTitle[0]?.toUpperCase()
       : null
 
-  const showBalanceInBtcMode =
-    showStableBalanceToggle && balanceMode === BalanceMode.Btc
+  const showBalanceInBtcMode = showStableBalanceToggle && balanceMode === BalanceMode.Btc
 
-  const limitedTransactions = useMemo(
-    () => transactions.slice(0, 5),
-    [transactions],
-  )
+  const limitedTransactions = useMemo(() => transactions.slice(0, 5), [transactions])
 
   return (
     <Screen headerShown={false} backgroundColor="#0F0F11" statusBar="light-content">
@@ -711,26 +707,34 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <View style={styles.apBadge}>
-              <Text style={styles.apBadgeText}>AP</Text>
+              <AfribitMonogram width={26} height={12} />
               <View style={[styles.apBadgeDot, { backgroundColor: colors.primary }]} />
             </View>
             <Text style={styles.wordmark}>Afribit Pay</Text>
           </View>
-          <Pressable onPress={canSwitchAccount ? handleSwitchPress : undefined}>
-            <View style={styles.avatarCircle}>
-              {avatarInitial ? (
-                <Text style={styles.avatarText}>{avatarInitial}</Text>
-              ) : (
-                <GaloyIcon name="user" size={18} color="#A8A39A" />
-              )}
-            </View>
-          </Pressable>
+          <View style={styles.headerRight}>
+            <GaloyIconButton
+              onPress={() => navigation.navigate("priceHistory")}
+              size={"medium"}
+              name="graph"
+              iconOnly={true}
+              weight="bold"
+              color="#F7F5F2"
+            />
+            <Pressable onPress={handleSwitchPress}>
+              <View style={styles.avatarCircle}>
+                {avatarInitial ? (
+                  <Text style={styles.avatarText}>{avatarInitial}</Text>
+                ) : (
+                  <GaloyIcon name="user" size={18} color="#A8A39A" />
+                )}
+              </View>
+            </Pressable>
+          </View>
         </View>
 
         {/* ─── BALANCE SECTION ─── */}
-        <Pressable
-          onPress={showStableBalanceToggle ? toggleBalanceMode : undefined}
-        >
+        <Pressable onPress={showStableBalanceToggle ? toggleBalanceMode : undefined}>
           <View style={styles.balanceSection}>
             <Text style={styles.balanceLabel}>Total balance</Text>
             <View style={styles.balanceRow}>
@@ -739,14 +743,10 @@ export const HomeScreen: React.FC = () => {
                   ? satsBalance.toLocaleString()
                   : defaultFormattedBalance}
               </Text>
-              {showBalanceInBtcMode && (
-                <Text style={styles.balanceUnit}> sats</Text>
-              )}
+              {showBalanceInBtcMode && <Text style={styles.balanceUnit}> sats</Text>}
             </View>
             {fiatEquivalent && (
-              <Text style={styles.fiatEquivalent}>
-                ≈ {fiatEquivalent}
-              </Text>
+              <Text style={styles.fiatEquivalent}>≈ {fiatEquivalent}</Text>
             )}
           </View>
         </Pressable>
@@ -851,16 +851,8 @@ export const HomeScreen: React.FC = () => {
           </Pressable>
         ))}
 
-        {/* ─── PRESERVED: Error, banners, bulletins, wallet overview ─── */}
+        {/* ─── PRESERVED: Error, banners, bulletins ─── */}
         {error && <GaloyErrorBox errorMessage={getErrorMessages(error)} />}
-        <WalletOverview
-          loading={loading}
-          setIsStablesatModalVisible={setIsStablesatModalVisible}
-          onRestrictedTap={() => setIsRestrictionModalVisible(true)}
-          wallets={wallets}
-          showBtcNotification={isOutgoing ? false : hasUnseenBtcTx}
-          showUsdNotification={isOutgoing ? false : hasUnseenUsdTx}
-        />
         {isSelfCustodial && <UnclaimedDepositBanner />}
         <NetworkStatusBanner />
         {shouldShowBanner && <BackupNudgeBanner onDismiss={dismissBanner} />}
@@ -943,6 +935,11 @@ const useStyles = makeStyles(({ colors }) => ({
     alignItems: "center",
     gap: 10,
   },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   apBadge: {
     width: 38,
     height: 38,
@@ -951,11 +948,6 @@ const useStyles = makeStyles(({ colors }) => ({
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
-  },
-  apBadgeText: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#F7F5F2",
   },
   apBadgeDot: {
     position: "absolute",

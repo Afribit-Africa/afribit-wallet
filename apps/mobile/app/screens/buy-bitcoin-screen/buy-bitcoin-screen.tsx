@@ -14,6 +14,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Text, makeStyles, useTheme } from "@rn-vui/themed"
 import { ScrollView } from "react-native-gesture-handler"
 
+import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { GaloyPrimaryButton } from "@app/components/atomic/galoy-primary-button"
 import { Screen } from "@app/components/screen"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
@@ -450,13 +451,17 @@ export const BuyBitcoinScreen: React.FC = () => {
             </View>
           ) : (
             <Pressable
-              style={styles.destinationRow}
+              style={styles.setupCard}
               onPress={() => navigation.navigate("settings")}
             >
-              <Text style={styles.destinationLabel}>
-                Set a Lightning address in Settings to enable buying
-              </Text>
-              <Text style={styles.destinationValue}>Set up now →</Text>
+              <View style={styles.setupIconCircle}>
+                <GaloyIcon name="lightning" size={16} color={colors.primary} />
+              </View>
+              <View style={styles.setupTextContainer}>
+                <Text style={styles.setupTitle}>Set up a Lightning address</Text>
+                <Text style={styles.setupSubtitle}>Required to receive sats from Bitika</Text>
+              </View>
+              <GaloyIcon name="caret-right" size={18} color={colors.grey3} />
             </Pressable>
           )}
 
@@ -600,6 +605,39 @@ const useStyles = makeStyles(({ colors }) => ({
     fontWeight: "600",
     color: colors.black,
     flex: 1,
+  },
+
+  setupCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: colors.grey5,
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 22,
+  },
+  setupIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.backdropWhite,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  setupTextContainer: {
+    flex: 1,
+  },
+  setupTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.black,
+  },
+  setupSubtitle: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: colors.grey3,
+    marginTop: 1,
   },
 
   buyButtonContainer: {

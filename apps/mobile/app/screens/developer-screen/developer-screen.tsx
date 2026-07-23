@@ -6,6 +6,7 @@ import InAppReview from "react-native-in-app-review"
 import { InAppBrowser } from "react-native-inappbrowser-reborn"
 
 import { gql, useApolloClient } from "@apollo/client"
+import { connect, defaultConfig, Seed } from "@breeztech/breez-sdk-spark-react-native"
 import { GaloyInput } from "@app/components/atomic/galoy-input"
 import { GALOY_INSTANCES, possibleGaloyInstanceNames } from "@app/config"
 import {
@@ -15,8 +16,13 @@ import {
 import { activateBeta } from "@app/graphql/client-only-query"
 import { useBetaQuery, useDebugScreenQuery, useLevelQuery } from "@app/graphql/generated"
 import { useIsAuthed } from "@app/graphql/is-authed-context"
+import { useAccountRegistry } from "@app/hooks/use-account-registry"
 import { useAppConfig } from "@app/hooks/use-app-config"
 import { RootStackParamList } from "@app/navigation/stack-param-lists"
+import { requireBreezApiKey, storageDirFor } from "@app/self-custodial/config"
+import { useSparkNetwork } from "@app/self-custodial/hooks/use-spark-network"
+import { AccountType } from "@app/types/wallet"
+import KeyStoreWrapper from "@app/utils/storage/secureStorage"
 import Clipboard from "@react-native-clipboard/clipboard"
 import crashlytics from "@react-native-firebase/crashlytics"
 import { useNavigation } from "@react-navigation/native"
@@ -25,7 +31,6 @@ import { Button, Text, makeStyles } from "@rn-vui/themed"
 
 import { Screen } from "../../components/screen"
 import { usePriceConversion, useSaveSessionProfile } from "@app/hooks"
-import { useSelfCustodialWallet } from "@app/self-custodial/providers/wallet"
 import useLogout from "../../hooks/use-logout"
 import { addDeviceToken } from "../../utils/notifications"
 import { testProps } from "../../utils/testProps"
@@ -42,28 +47,46 @@ gql`
   }
 `
 
-// dev-only token mint for obtaining SPARK_TOKEN_IDENTIFIER during Phase 1 setup, to be deleted after capturing the identifier
+// dev-only token mint for obtaining SPARK_TOKEN_IDENTIFIER during Phase 1 setup, to be deleted after capturing the identifier.
+// Connects a SEPARATE, temporary SDK instance without the app's normal stableBalanceConfig.tokens
+// entry (which itself requires SPARK_TOKEN_IDENTIFIER to already be set - createIssuerToken has to
+// run before that value exists, so it can't go through useSelfCustodialWallet()'s sdk).
 const SparkTokenIssuerButton: React.FC = () => {
-  const { sdk } = useSelfCustodialWallet()
+  const network = useSparkNetwork()
+  const { activeAccount } = useAccountRegistry()
 
   const handleMintToken = async () => {
     try {
-      if (!sdk) {
-        Alert.alert(
-          "Wallet not connected",
-          "Open the app with a connected self-custodial account first.",
-        )
+      if (!activeAccount || activeAccount.type !== AccountType.SelfCustodial) {
+        Alert.alert("No self-custodial account", "Switch to a self-custodial account first.")
         return
       }
-      const metadata = await sdk.getTokenIssuer().createIssuerToken({
-        name: "Afribit Pay Test USD",
-        ticker: "USDB",
-        decimals: 6,
-        isFreezable: false,
-        maxSupply: BigInt(1000000000),
+      const mnemonic = await KeyStoreWrapper.getMnemonicForAccount(activeAccount.id)
+      if (!mnemonic) {
+        Alert.alert("No mnemonic found", "This account has no stored mnemonic.")
+        return
+      }
+      const config = defaultConfig(network)
+      config.apiKey = requireBreezApiKey()
+      const seed = new Seed.Mnemonic({ mnemonic, passphrase: undefined })
+      const tempSdk = await connect({
+        config,
+        seed,
+        storageDir: `${storageDirFor(activeAccount.id, network)}-mint-bootstrap`,
       })
-      console.log("SPARK_TOKEN_IDENTIFIER:", metadata.identifier)
-      Alert.alert("Token minted", `SPARK_TOKEN_IDENTIFIER:\n${metadata.identifier}`)
+      try {
+        const metadata = await tempSdk.getTokenIssuer().createIssuerToken({
+          name: "Afribit Pay Test USD",
+          ticker: "USDB",
+          decimals: 6,
+          isFreezable: false,
+          maxSupply: BigInt(1000000000),
+        })
+        console.log("SPARK_TOKEN_IDENTIFIER:", metadata.identifier)
+        Alert.alert("Token minted", `SPARK_TOKEN_IDENTIFIER:\n${metadata.identifier}`)
+      } finally {
+        await tempSdk.disconnect()
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       Alert.alert("Failed to mint token", message)

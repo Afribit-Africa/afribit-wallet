@@ -475,6 +475,13 @@ const SendBitcoinDetailsScreen: React.FC<Props> = ({ route }) => {
         isVisible={modalHighFeesVisible}
         cancel={() => setModalHighFeesVisible(false)}
       />
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+        hitSlop={12}
+      >
+        <GaloyIcon name="arrow-left" size={22} color={colors.black} />
+      </TouchableOpacity>
       <View style={styles.sendBitcoinAmountContainer}>
         <View style={styles.fieldContainer}>
           <Text style={styles.fieldTitleText}>
@@ -625,6 +632,17 @@ const useStyles = makeStyles(({ colors }) => ({
   sendBitcoinAmountContainer: {
     flex: 1,
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.grey5,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 20,
+    marginTop: 4,
+    marginBottom: 20,
+  },
   fieldBackground: {
     flexDirection: "row",
     borderStyle: "solid",
@@ -674,6 +692,7 @@ const useStyles = makeStyles(({ colors }) => ({
   walletCurrencyText: {
     fontWeight: "bold",
     fontSize: 18,
+    color: colors.black,
   },
   walletSelectorTypeTextContainer: {
     flex: 1,
@@ -686,6 +705,7 @@ const useStyles = makeStyles(({ colors }) => ({
   fieldTitleText: {
     fontWeight: "bold",
     marginBottom: 4,
+    color: colors.grey3,
   },
   fieldContainer: {
     marginBottom: 12,
@@ -715,6 +735,7 @@ const useStyles = makeStyles(({ colors }) => ({
   },
   amountText: {
     fontWeight: "bold",
+    color: colors.black,
   },
   amountRightMaxField: {
     flexDirection: "row",

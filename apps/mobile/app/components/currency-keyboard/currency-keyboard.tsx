@@ -142,6 +142,7 @@ const useStyles = makeStyles(({ colors }) => ({
     fontWeight: "700",
     lineHeight: 30,
     textAlign: "center",
+    color: colors.black,
   },
   backspaceIcon: {
     color: colors.primary,

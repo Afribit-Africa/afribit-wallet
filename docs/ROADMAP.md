@@ -22,9 +22,9 @@ This roadmap is sequenced deliberately: nothing that touches real money happens 
 - [ ] Test against Bitika's sandbox limits and webhook confirmations before any live-money work — code path is in place (polls `/api/v1/transactions/code/{code}`); an actual end-to-end sandbox run with real API responses (incl. the `000001`/`000002` decline scenarios) hasn't been exercised on-device yet
 
 ## Phase 3 — Off-ramp foundation (sandbox only)
-- [ ] KE-QR parsing: recognize till, paybill, and send-money QR formats
-- [ ] Lightning invoice/address recognition in the same scan flow
-- [ ] Payout engine: rate quoting, sats debit, idempotency — built and tested entirely in sandbox
+- [ ] KE-QR parsing: recognize till, paybill, and send-money QR formats — v1 done (2026-07-23): generic EMVCo/Safaricom KE-QR detection + "Detected automatically" sheet on the Scan screen; does not yet distinguish till vs. paybill vs. send-money sub-types
+- [x] Lightning invoice/address recognition in the same scan flow (already existed, now shown via the same detected-sheet UI as KE-QR)
+- [ ] Payout engine: rate quoting, sats debit, idempotency — built and tested entirely in sandbox — not started; scanning a KE-QR today shows an honest "coming soon" state instead
 - [ ] Resolve Splice Africa vs. IntaSend vs. direct Daraja, based on direct conversations, not assumptions
 - [ ] Confirm the Splice/Tando ownership question before treating Splice as a settled vendor choice
 

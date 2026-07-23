@@ -20,8 +20,8 @@ import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Text, makeStyles, useTheme } from "@rn-vui/themed"
 
-import AppLogoDarkMode from "../../assets/logo/app-logo-dark.svg"
-import AppLogoLightMode from "../../assets/logo/blink-logo-light.svg"
+import AppLogoDarkMode from "../../assets/logo/afribit/afribit-lockup-horizontal-white.svg"
+import AppLogoLightMode from "../../assets/logo/afribit/afribit-lockup-horizontal.svg"
 import { Screen } from "../../components/screen"
 import { RootStackParamList } from "../../navigation/stack-param-lists"
 import useAppCheckToken from "./use-device-token"
@@ -49,7 +49,7 @@ export const GetStartedScreen: React.FC = () => {
   const { LL } = useI18nContext()
 
   const { deviceAccountEnabled, nonCustodialEnabled } = useFeatureFlags()
-  const { options, defaultSelected, loading: detectingCountry } = useAccountTypeOptions()
+  const { options, defaultSelected, selfCustodialTemporarilyDisabled, loading: detectingCountry } = useAccountTypeOptions()
   const { isCreationBlocked, loading: detectingRegion } = useCreationBlock()
   const canCreateAccount = options.length > 0
   const isCreateAccountDisabled = !canCreateAccount || detectingCountry || detectingRegion
@@ -124,6 +124,13 @@ export const GetStartedScreen: React.FC = () => {
           </Pressable>
         </View>
         <View style={styles.bottom}>
+          {selfCustodialTemporarilyDisabled && (
+            <View style={styles.unavailableBanner}>
+              <Text style={styles.unavailableBannerText}>
+                {LL.GetStartedScreen.accountCreationDisabled()}
+              </Text>
+            </View>
+          )}
           <GaloyPrimaryButton
             title={LL.GetStartedScreen.createAccount()}
             onPress={handleCreateAccount}
@@ -144,7 +151,7 @@ export const GetStartedScreen: React.FC = () => {
   )
 }
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles(({ colors }) => ({
   container: {
     flex: 1,
   },
@@ -153,7 +160,19 @@ const useStyles = makeStyles(() => ({
     paddingHorizontal: 24,
     justifyContent: "flex-end",
   },
-
+  unavailableBanner: {
+    backgroundColor: colors.grey5,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  unavailableBannerText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.grey1,
+    textAlign: "center",
+  },
   secondaryButtonContainer: {
     marginVertical: 15,
   },

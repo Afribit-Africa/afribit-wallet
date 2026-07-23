@@ -2064,7 +2064,8 @@
             "recoveryOption": "Recover funds by SMS or email",
             "dailyLimit": "USD 1,000 daily transaction limit",
             "onchainReceive": "Receive bitcoin onchain"
-        }
+        },
+        "accountCreationDisabled": "New account creation is temporarily unavailable. Please check back later."
     },
     "MapScreen": {
         "navToSettingsTitle": "Location permissions",

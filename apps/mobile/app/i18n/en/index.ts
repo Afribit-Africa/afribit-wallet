@@ -2093,14 +2093,16 @@ const en: BaseTranslation = {
       "Unfortunately, we were unable to create your trial account. Try again later or create an account with a phone number.",
     trialAccountHasLimits: "Trial account has limits",
     trialAccountLimits: {
-      modalTitle: "Upgrade for more benefits",
-      noBackup: "No backup option",
-      sendingLimit: "Reduced daily sending limit",
-      noOnchain: "No receiving bitcoin onchain",
-      recoveryOption: "Recover funds by SMS or email",
-      dailyLimit: "USD 1,000 daily transaction limit",
-      onchainReceive: "Receive bitcoin onchain",
+        modalTitle: "Upgrade for more benefits",
+        noBackup: "No backup option",
+        sendingLimit: "Reduced daily sending limit",
+        noOnchain: "No receiving bitcoin onchain",
+        recoveryOption: "Recover funds by SMS or email",
+        dailyLimit: "USD 1,000 daily transaction limit",
+        onchainReceive: "Receive bitcoin onchain",
     },
+    accountCreationDisabled:
+      "New account creation is temporarily unavailable. Please check back later.",
   },
   MapScreen: {
     navToSettingsTitle: "Location permissions",

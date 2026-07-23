@@ -6505,6 +6505,10 @@ type RootTranslation = {
 			 */
 			onchainReceive: string
 		}
+		/**
+		 * N​e​w​ ​a​c​c​o​u​n​t​ ​c​r​e​a​t​i​o​n​ ​i​s​ ​t​e​m​p​o​r​a​r​i​l​y​ ​u​n​a​v​a​i​l​a​b​l​e​.​ ​P​l​e​a​s​e​ ​c​h​e​c​k​ ​b​a​c​k​ ​l​a​t​e​r​.
+		 */
+		accountCreationDisabled: string
 	}
 	MapScreen: {
 		/**
@@ -19100,6 +19104,10 @@ export type TranslationFunctions = {
 			 */
 			onchainReceive: () => LocalizedString
 		}
+		/**
+		 * New account creation is temporarily unavailable. Please check back later.
+		 */
+		accountCreationDisabled: () => LocalizedString
 	}
 	MapScreen: {
 		/**

@@ -70,8 +70,9 @@ export const AccountTypeSelectionScreen: React.FC = () => {
   const isSelected = (option: AccountOption) => selected === option
   const showSelfCustodial = options.includes(AccountOption.SelfCustodial)
   const showCustodial = options.includes(AccountOption.Custodial)
+  const hasOptions = options.length > 0
   const isContinueDisabled =
-    !selected || detectingCountry || (isCreateMode && detectingRegion)
+    !selected || detectingCountry || (isCreateMode && detectingRegion) || !hasOptions
 
   return (
     <Screen>
@@ -95,7 +96,7 @@ export const AccountTypeSelectionScreen: React.FC = () => {
             <View style={styles.loaderContainer}>
               <ActivityIndicator color={colors.primary} />
             </View>
-          ) : (
+          ) : hasOptions ? (
             <View style={styles.grid}>
               {showCustodial && (
                 <Pressable
@@ -145,6 +146,10 @@ export const AccountTypeSelectionScreen: React.FC = () => {
                 </Pressable>
               )}
             </View>
+          ) : (
+            <Text style={styles.noOptionsText}>
+              {LL.AccountTypeSelectionScreen.selfCustodialDisabled()}
+            </Text>
           )}
         </View>
 
@@ -196,6 +201,11 @@ const useStyles = makeStyles(({ colors }) => ({
   loaderContainer: {
     paddingVertical: 40,
     alignItems: "center",
+  },
+  noOptionsText: {
+    textAlign: "center",
+    color: colors.grey2,
+    paddingVertical: 24,
   },
   grid: {
     flexDirection: "row",

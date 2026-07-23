@@ -15,16 +15,12 @@ type DisplayPaymentRequestReturn = {
 
 export const useDisplayPaymentRequest = (
   request: RequestState,
-  isOnChainPage: boolean,
-  onchainAddress: string | null,
 ): DisplayPaymentRequestReturn => {
   const { type: requestType, canUsePaycode, info, lnAddressHostname } = request
 
   const prevPaymentRequest = useRef("")
 
-  const showActions = isOnChainPage
-    ? Boolean(onchainAddress)
-    : requestType !== Invoice.PayCode || canUsePaycode
+  const showActions = requestType !== Invoice.PayCode || canUsePaycode
 
   const readablePaymentRequest = (() => {
     if (info?.data?.invoiceType === Invoice.Lightning)
@@ -37,16 +33,11 @@ export const useDisplayPaymentRequest = (
       return getLightningAddress(lnAddressHostname, info.data.username)
   })()
 
-  const activePaymentRequest = isOnChainPage
-    ? onchainAddress
-      ? truncateMiddle(onchainAddress)
-      : null
-    : readablePaymentRequest
-  const displayPaymentRequest = activePaymentRequest || prevPaymentRequest.current
+  const displayPaymentRequest = readablePaymentRequest || prevPaymentRequest.current
 
   useEffect(() => {
-    if (activePaymentRequest) prevPaymentRequest.current = activePaymentRequest
-  }, [activePaymentRequest])
+    if (readablePaymentRequest) prevPaymentRequest.current = readablePaymentRequest
+  }, [readablePaymentRequest])
 
   return { displayPaymentRequest, showActions }
 }

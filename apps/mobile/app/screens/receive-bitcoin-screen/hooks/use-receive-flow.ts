@@ -15,22 +15,7 @@ import { useLnurlWithdraw } from "./use-lnurl-withdraw"
 
 type RequestState = SelfCustodialPaymentRequestState
 
-type CarouselContext = {
-  isOnChainPage: boolean
-  onchainWalletCurrency: WalletCurrency
-  syncOnchainWallet: (currency: WalletCurrency) => void
-  onchainAddress: string | null
-}
-
-export const useReceiveFlow = (
-  request: RequestState,
-  {
-    isOnChainPage,
-    onchainWalletCurrency,
-    syncOnchainWallet,
-    onchainAddress,
-  }: CarouselContext,
-) => {
+export const useReceiveFlow = (request: RequestState) => {
   const {
     pr,
     setAmount,
@@ -45,15 +30,11 @@ export const useReceiveFlow = (
     receivingWalletDescriptor,
   } = request
 
-  const activeCopyableContent = isOnChainPage
-    ? onchainAddress ?? undefined
-    : pr?.info?.data?.getCopyableInvoiceFn()
-
-  const activeInvoiceType = isOnChainPage ? Invoice.OnChain : requestType
+  const activeCopyableContent = pr?.info?.data?.getCopyableInvoiceFn()
 
   const { copyToClipboard: handleCopy, share: handleShare } = usePaymentActions({
     copyableContent: activeCopyableContent,
-    invoiceType: activeInvoiceType,
+    invoiceType: requestType,
   })
 
   const receiveViaNFC = useLnurlWithdraw(pr)
@@ -98,21 +79,15 @@ export const useReceiveFlow = (
   const handleToggleWallet = useCallback(() => {
     if (!isReady) return
 
-    const current = isOnChainPage
-      ? onchainWalletCurrency
-      : receivingWalletDescriptor.currency
+    const current = receivingWalletDescriptor.currency
     const next = current === WalletCurrency.Btc ? WalletCurrency.Usd : WalletCurrency.Btc
 
     const hasContent = isNonZeroMoneyAmount(unitOfAccountAmount) || memoChangeText
     const revertToPaycode = next === WalletCurrency.Btc && canUsePaycode && !hasContent
 
     switchReceivingWallet(revertToPaycode ? Invoice.PayCode : Invoice.Lightning, next)
-    syncOnchainWallet(next)
   }, [
     isReady,
-    isOnChainPage,
-    onchainWalletCurrency,
-    syncOnchainWallet,
     receivingWalletDescriptor.currency,
     switchReceivingWallet,
     canUsePaycode,

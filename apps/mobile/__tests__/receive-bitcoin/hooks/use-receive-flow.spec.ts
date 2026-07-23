@@ -60,13 +60,6 @@ const createMockRequest = (overrides: Partial<MockRequest> = {}): MockRequest =>
   ...overrides,
 })
 
-const defaultCarousel = {
-  isOnChainPage: false,
-  onchainWalletCurrency: WalletCurrency.Btc,
-  syncOnchainWallet: jest.fn(),
-  onchainAddress: null,
-}
-
 describe("useReceiveFlow", () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -76,7 +69,7 @@ describe("useReceiveFlow", () => {
     it("calls setAmount on the request", () => {
       const request = createMockRequest()
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -89,7 +82,7 @@ describe("useReceiveFlow", () => {
     it("switches from PayCode to Lightning when amount is non-zero", () => {
       const request = createMockRequest({ type: Invoice.PayCode })
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -106,7 +99,7 @@ describe("useReceiveFlow", () => {
         memoChangeText: null,
       })
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -123,7 +116,7 @@ describe("useReceiveFlow", () => {
         memoChangeText: "some memo",
       })
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -139,7 +132,7 @@ describe("useReceiveFlow", () => {
         canUsePaycode: false,
       })
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -154,7 +147,7 @@ describe("useReceiveFlow", () => {
     it("calls setMemo on the request", () => {
       const request = createMockRequest()
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -170,7 +163,7 @@ describe("useReceiveFlow", () => {
         memoChangeText: "test memo",
       })
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -188,7 +181,7 @@ describe("useReceiveFlow", () => {
         unitOfAccountAmount: zeroAmount,
       })
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -206,7 +199,7 @@ describe("useReceiveFlow", () => {
         unitOfAccountAmount: nonZeroAmount,
       })
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -222,9 +215,8 @@ describe("useReceiveFlow", () => {
       const request = createMockRequest({
         receivingWalletDescriptor: { currency: WalletCurrency.Btc },
       })
-      const carousel = { ...defaultCarousel }
 
-      const { result } = renderHook(() => useReceiveFlow(request as never, carousel))
+      const { result } = renderHook(() => useReceiveFlow(request as never))
 
       act(() => {
         result.current.handleToggleWallet()
@@ -234,16 +226,14 @@ describe("useReceiveFlow", () => {
         Invoice.Lightning,
         WalletCurrency.Usd,
       )
-      expect(carousel.syncOnchainWallet).toHaveBeenCalledWith(WalletCurrency.Usd)
     })
 
     it("toggles from USD to BTC", () => {
       const request = createMockRequest({
         receivingWalletDescriptor: { currency: WalletCurrency.Usd },
       })
-      const carousel = { ...defaultCarousel }
 
-      const { result } = renderHook(() => useReceiveFlow(request as never, carousel))
+      const { result } = renderHook(() => useReceiveFlow(request as never))
 
       act(() => {
         result.current.handleToggleWallet()
@@ -253,7 +243,6 @@ describe("useReceiveFlow", () => {
         Invoice.PayCode,
         WalletCurrency.Btc,
       )
-      expect(carousel.syncOnchainWallet).toHaveBeenCalledWith(WalletCurrency.Btc)
     })
 
     it("reverts to PayCode when switching to BTC with no content and canUsePaycode", () => {
@@ -264,7 +253,7 @@ describe("useReceiveFlow", () => {
         unitOfAccountAmount: zeroAmount,
       })
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -284,7 +273,7 @@ describe("useReceiveFlow", () => {
         unitOfAccountAmount: nonZeroAmount,
       })
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -297,32 +286,10 @@ describe("useReceiveFlow", () => {
       )
     })
 
-    it("uses onchainWalletCurrency when on chain page", () => {
-      const request = createMockRequest({
-        receivingWalletDescriptor: { currency: WalletCurrency.Btc },
-      })
-      const carousel = {
-        ...defaultCarousel,
-        isOnChainPage: true,
-        onchainWalletCurrency: WalletCurrency.Btc,
-      }
-
-      const { result } = renderHook(() => useReceiveFlow(request as never, carousel))
-
-      act(() => {
-        result.current.handleToggleWallet()
-      })
-
-      expect(request.switchReceivingWallet).toHaveBeenCalledWith(
-        Invoice.Lightning,
-        WalletCurrency.Usd,
-      )
-    })
-
     it("does nothing when not ready (Loading state)", () => {
       const request = createMockRequest({ state: "Loading" })
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -337,7 +304,7 @@ describe("useReceiveFlow", () => {
     it("exposes handleCopy from usePaymentActions", () => {
       const request = createMockRequest()
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -350,7 +317,7 @@ describe("useReceiveFlow", () => {
     it("exposes handleShare from usePaymentActions", () => {
       const request = createMockRequest()
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       act(() => {
@@ -363,7 +330,7 @@ describe("useReceiveFlow", () => {
     it("exposes receiveViaNFC from useLnurlWithdraw", () => {
       const request = createMockRequest()
       const { result } = renderHook(() =>
-        useReceiveFlow(request as never, defaultCarousel),
+        useReceiveFlow(request as never),
       )
 
       expect(result.current.receiveViaNFC).toBe(mockReceiveViaNFC)

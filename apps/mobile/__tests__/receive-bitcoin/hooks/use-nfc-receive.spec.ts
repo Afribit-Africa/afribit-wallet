@@ -17,7 +17,6 @@ const defaultParams = {
   requestState: PaymentRequestState.Created,
   hasSettlementAmount: true,
   handleSetAmount: jest.fn(),
-  isOnChainPage: false,
 }
 
 describe("useNfcReceive", () => {
@@ -40,18 +39,6 @@ describe("useNfcReceive", () => {
     const { result } = renderHook(() => useNfcReceive(defaultParams))
 
     // nfcSupported starts false, resolving false causes no re-render
-    expect(result.current.showNfcButton).toBe(false)
-  })
-
-  it("hides NFC button when on onchain page", async () => {
-    const { result } = renderHook(() =>
-      useNfcReceive({ ...defaultParams, isOnChainPage: true }),
-    )
-
-    await waitFor(() => {
-      expect(mockIsSupported).toHaveBeenCalled()
-    })
-
     expect(result.current.showNfcButton).toBe(false)
   })
 

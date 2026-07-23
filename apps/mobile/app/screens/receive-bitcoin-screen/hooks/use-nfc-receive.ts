@@ -15,7 +15,6 @@ type NfcReceiveParams = {
   requestState: PaymentRequestStateType | undefined
   hasSettlementAmount: boolean
   handleSetAmount: (amount: MoneyAmount<WalletOrDisplayCurrency>) => void
-  isOnChainPage: boolean
 }
 
 type NfcReceiveReturn = {
@@ -33,7 +32,6 @@ export const useNfcReceive = ({
   requestState,
   hasSettlementAmount,
   handleSetAmount,
-  isOnChainPage,
 }: NfcReceiveParams): NfcReceiveReturn => {
   const pendingNfc = useRef(false)
   const [displayReceiveNfc, setDisplayReceiveNfc] = useState(false)
@@ -52,8 +50,7 @@ export const useNfcReceive = ({
   )
 
   const isNfcType =
-    !isOnChainPage &&
-    (requestType === Invoice.Lightning || requestType === Invoice.PayCode)
+    requestType === Invoice.Lightning || requestType === Invoice.PayCode
 
   const showNfcButton =
     isNfcType && requestState === PaymentRequestState.Created && nfcSupported

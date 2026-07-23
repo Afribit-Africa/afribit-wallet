@@ -5,17 +5,14 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { makeStyles, Text, useTheme } from "@rn-vui/themed"
 
-import { ActionButton } from "@app/components/action-button"
 import { AmountInputModal } from "@app/components/amount-input/amount-input-modal"
 import { ContextualInfo } from "@app/components/contextual-info"
 import { ModalNfc } from "@app/components/modal-nfc"
 import { NoteInput } from "@app/components/note-input"
-import { QRCarousel } from "@app/components/qr-carousel"
 import { ReceiveAmountRow } from "@app/components/receive-amount-row"
 import { Screen } from "@app/components/screen"
 import { SetLightningAddressModal } from "@app/components/set-lightning-address-modal"
 import { TrialAccountLimitsModal } from "@app/components/upgrade-account-modal"
-import { WalletCurrency } from "@app/graphql/generated"
 import { useNotificationPermission, usePriceConversion } from "@app/hooks"
 import { useActiveWallet } from "@app/hooks/use-active-wallet"
 import { useDollarBalanceRestricted } from "@app/hooks/use-dollar-balance-restricted"
@@ -24,6 +21,7 @@ import { RootStackParamList } from "@app/navigation/stack-param-lists"
 import { usePaymentRequest as useSelfCustodialPaymentRequest } from "@app/self-custodial/hooks"
 import type { SelfCustodialPaymentRequestState } from "@app/self-custodial/hooks/types"
 import { ActiveWalletStatus } from "@app/types/wallet"
+import { GaloyIcon } from "@app/components/atomic/galoy-icon"
 import { testProps } from "@app/utils/testProps"
 
 import { NfcHeaderButton } from "./nfc-header-button"
@@ -33,9 +31,7 @@ import { Invoice, InvoiceType, PaymentRequestState } from "./payment/index.types
 import {
   useDisplayPaymentRequest,
   useNfcReceive,
-  useOnchainResolver,
   usePaymentRequest,
-  useReceiveCarousel,
   useReceiveFlow,
 } from "./hooks"
 
@@ -100,6 +96,9 @@ const ReceiveScreenContent: React.FC<ReceiveScreenContentProps> = ({
 }) => {
   const styles = useStyles()
   const { LL } = useI18nContext()
+  const {
+    theme: { colors },
+  } = useTheme()
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
 
   useNotificationPermission()
@@ -120,14 +119,6 @@ const ReceiveScreenContent: React.FC<ReceiveScreenContentProps> = ({
     [],
   )
 
-  const carousel = useReceiveCarousel(requestState, openTrialModal)
-
-  const onchain = useOnchainResolver(
-    isSelfCustodial,
-    requestState,
-    carousel.onchainWalletCurrency,
-  )
-
   const {
     handleSetAmount,
     handleMemoBlur,
@@ -135,18 +126,9 @@ const ReceiveScreenContent: React.FC<ReceiveScreenContentProps> = ({
     handleCopy,
     handleShare,
     receiveViaNFC,
-  } = useReceiveFlow(requestState, {
-    isOnChainPage: carousel.isOnChainPage,
-    onchainWalletCurrency: carousel.onchainWalletCurrency,
-    syncOnchainWallet: carousel.syncOnchainWallet,
-    onchainAddress: onchain.address,
-  })
+  } = useReceiveFlow(requestState)
 
-  const { displayPaymentRequest, showActions } = useDisplayPaymentRequest(
-    requestState,
-    carousel.isOnChainPage,
-    onchain.address,
-  )
+  const { displayPaymentRequest, showActions } = useDisplayPaymentRequest(requestState)
 
   const {
     displayReceiveNfc,
@@ -161,7 +143,6 @@ const ReceiveScreenContent: React.FC<ReceiveScreenContentProps> = ({
     requestState: requestState.state,
     hasSettlementAmount: Boolean(requestState.settlementAmount),
     handleSetAmount,
-    isOnChainPage: carousel.isOnChainPage,
   })
 
   const titleByInvoiceType: Record<InvoiceType, string> = {
@@ -169,10 +150,7 @@ const ReceiveScreenContent: React.FC<ReceiveScreenContentProps> = ({
     [Invoice.Lightning]: LL.ReceiveScreen.lightningInvoice(),
     [Invoice.PayCode]: LL.ReceiveScreen.lightningAddress(),
   }
-  const activeInvoiceType = carousel.isOnChainPage
-    ? Invoice.OnChain
-    : requestState.type ?? Invoice.Lightning
-  const dynamicTitle = titleByInvoiceType[activeInvoiceType]
+  const dynamicTitle = titleByInvoiceType[requestState.type ?? Invoice.Lightning]
 
   useEffect(() => {
     navigation.setOptions({ title: dynamicTitle })
@@ -195,16 +173,8 @@ const ReceiveScreenContent: React.FC<ReceiveScreenContentProps> = ({
     return () => clearTimeout(id)
   }, [requestState.state, navigation])
 
-  const onchainAmountRowCurrency = isSelfCustodial
-    ? WalletCurrency.Btc
-    : carousel.onchainWalletCurrency
-
-  const amountRowCurrency = carousel.isOnChainPage
-    ? onchainAmountRowCurrency
-    : requestState.receivingWalletDescriptor.currency
-
   const canToggleWallet = isSelfCustodial
-    ? !carousel.isOnChainPage && !selfCustodialRequest?.isAssetToggleDisabled
+    ? !selfCustodialRequest?.isAssetToggleDisabled
     : !isDollarBalanceRestricted
 
   return (
@@ -215,65 +185,40 @@ const ReceiveScreenContent: React.FC<ReceiveScreenContentProps> = ({
       style={styles.screenStyle}
       {...testProps("receive-screen")}
     >
-      <QRCarousel
-        ref={carousel.ref}
-        page0={
-          <QRView
-            type={requestState.info?.data?.invoiceType || requestState.type}
-            getFullUri={requestState.info?.data?.getFullUriFn}
-            loading={requestState.state === PaymentRequestState.Loading}
-            completed={requestState.state === PaymentRequestState.Paid}
-            converting={isConverting}
-            err={
-              requestState.state === PaymentRequestState.Error
-                ? LL.ReceiveScreen.error()
-                : ""
-            }
-            expired={requestState.state === PaymentRequestState.Expired}
-            regenerateInvoiceFn={requestState.regenerateInvoice}
-            copyToClipboard={handleCopy}
-            isPayCode={requestState.type === Invoice.PayCode}
-            canUsePayCode={requestState.canUsePaycode}
-            toggleIsSetLightningAddressModalVisible={toggleLightningModal}
-          />
-        }
-        page1={
-          <QRView
-            type={Invoice.OnChain}
-            getFullUri={onchain.getFullUriFn}
-            loading={onchain.loading}
-            completed={requestState.state === PaymentRequestState.Paid}
-            converting={isConverting}
-            err=""
-            expired={false}
-            regenerateInvoiceFn={requestState.regenerateInvoice}
-            copyToClipboard={handleCopy}
-            isPayCode={false}
-            canUsePayCode={false}
-            toggleIsSetLightningAddressModalVisible={toggleLightningModal}
-          />
-        }
-        onSnap={carousel.handleSnap}
-      />
+      <View style={styles.content}>
+        {/* Lightning pill badge */}
+        <View style={styles.lightningPill}>
+          <GaloyIcon name="lightning" size={14} color={colors.primary} />
+          <Text style={styles.lightningPillText}>Lightning</Text>
+        </View>
 
-      <Pressable
-        style={styles.paymentIdentifier}
-        onPress={handleCopy}
-        accessibilityRole="button"
-        accessibilityHint={
-          carousel.isOnChainPage
-            ? LL.ReceiveScreen.copyClipboardBitcoin()
-            : LL.ReceiveScreen.copyClipboard()
-        }
-      >
-        {carousel.isOnChainPage || requestState.type === Invoice.Lightning ? (
-          <Text
-            {...testProps("readable-payment-request")}
-            style={styles.paymentIdentifierText}
-          >
-            {displayPaymentRequest}
-          </Text>
-        ) : (
+        {/* QR code */}
+        <QRView
+          type={requestState.info?.data?.invoiceType || requestState.type}
+          getFullUri={requestState.info?.data?.getFullUriFn}
+          loading={requestState.state === PaymentRequestState.Loading}
+          completed={requestState.state === PaymentRequestState.Paid}
+          converting={isConverting}
+          err={
+            requestState.state === PaymentRequestState.Error
+              ? LL.ReceiveScreen.error()
+              : ""
+          }
+          expired={requestState.state === PaymentRequestState.Expired}
+          regenerateInvoiceFn={requestState.regenerateInvoice}
+          copyToClipboard={handleCopy}
+          isPayCode={requestState.type === Invoice.PayCode}
+          canUsePayCode={requestState.canUsePaycode}
+          toggleIsSetLightningAddressModalVisible={toggleLightningModal}
+        />
+
+        {/* Payment identifier pill */}
+        <Pressable
+          style={styles.paymentIdentifier}
+          onPress={handleCopy}
+          accessibilityRole="button"
+          accessibilityHint={LL.ReceiveScreen.copyClipboard()}
+        >
           <Text
             {...testProps("readable-payment-request")}
             style={styles.paymentIdentifierText}
@@ -282,74 +227,80 @@ const ReceiveScreenContent: React.FC<ReceiveScreenContentProps> = ({
           >
             {displayPaymentRequest}
           </Text>
-        )}
-      </Pressable>
+          <GaloyIcon name="copy-paste" size={16} color={colors.grey3} />
+        </Pressable>
 
-      <View style={styles.inputsContainer}>
-        <ReceiveAmountRow
-          unitOfAccountAmount={requestState.unitOfAccountAmount}
-          walletCurrency={amountRowCurrency}
-          convertMoneyAmount={requestState.convertMoneyAmount}
-          setAmount={handleSetAmount}
-          canSetAmount={requestState.canSetAmount}
-          onToggleWallet={handleToggleWallet}
-          canToggleWallet={canToggleWallet}
-          disabled={
-            !isSelfCustodial &&
-            carousel.isOnChainPage &&
-            carousel.onchainWalletCurrency === WalletCurrency.Usd
-          }
-        />
+        {/* Explanatory text */}
+        <Text style={styles.hintText}>{LL.ReceiveScreen.tapQrCodeCopy()}</Text>
 
-        <NoteInput
-          onBlur={handleMemoBlur}
-          onChangeText={requestState.setMemoChangeText}
-          value={requestState.memoChangeText || ""}
-          editable={requestState.canSetMemo}
-          big={false}
-          iconSize={16}
-          fontSize={14}
-        />
-
+        {/* Copy / Share buttons */}
         {showActions && (
           <View style={styles.actionsRow}>
-            <ActionButton
-              label={LL.ReceiveScreen.copyInvoice()}
-              icon="copy-paste"
+            <Pressable
+              style={({ pressed }) => [
+                styles.copyButton,
+                pressed && styles.copyButtonPressed,
+              ]}
               onPress={handleCopy}
-              accessibilityHint={
-                carousel.isOnChainPage
-                  ? LL.ReceiveScreen.copyClipboardBitcoin()
-                  : LL.ReceiveScreen.copyClipboard()
-              }
-            />
-            <ActionButton
-              label={LL.ReceiveScreen.shareInvoice()}
-              icon="share"
+              accessibilityRole="button"
+              accessibilityHint={LL.ReceiveScreen.copyClipboard()}
+            >
+              <Text style={styles.copyButtonText}>
+                {LL.ReceiveScreen.copyInvoice()}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.shareButton,
+                pressed && styles.shareButtonPressed,
+              ]}
               onPress={handleShare}
-              accessibilityHint={
-                carousel.isOnChainPage
-                  ? LL.common.shareBitcoin()
-                  : LL.common.shareLightning()
-              }
-            />
+              accessibilityRole="button"
+              accessibilityHint={LL.common.shareLightning()}
+            >
+              <Text style={styles.shareButtonText}>
+                {LL.ReceiveScreen.shareInvoice()}
+              </Text>
+            </Pressable>
           </View>
         )}
 
-        <ContextualInfo
-          type={carousel.isOnChainPage ? Invoice.OnChain : requestState.type}
-          expirationTime={requestState.expirationTime ?? 0}
-          setExpirationTime={requestState.setExpirationTime}
-          walletCurrency={requestState.receivingWalletDescriptor.currency}
-          canSetExpirationTime={requestState.canSetExpirationTime}
-          feesInformation={requestState.feesInformation}
-          shouldShowAutoConvertMinWarning={
-            !carousel.isOnChainPage &&
-            selfCustodialRequest?.shouldShowAutoConvertMinWarning
-          }
-          autoConvertMinSats={selfCustodialRequest?.autoConvertMinSats}
-          autoConvertMinFiat={selfCustodialRequest?.autoConvertMinFiat}
-        />
+        {/* Inputs section */}
+        <View style={styles.inputsContainer}>
+          <ReceiveAmountRow
+            unitOfAccountAmount={requestState.unitOfAccountAmount}
+            walletCurrency={requestState.receivingWalletDescriptor.currency}
+            convertMoneyAmount={requestState.convertMoneyAmount}
+            setAmount={handleSetAmount}
+            canSetAmount={requestState.canSetAmount}
+            onToggleWallet={handleToggleWallet}
+            canToggleWallet={canToggleWallet}
+          />
+
+          <NoteInput
+            onBlur={handleMemoBlur}
+            onChangeText={requestState.setMemoChangeText}
+            value={requestState.memoChangeText || ""}
+            editable={requestState.canSetMemo}
+            big={false}
+            iconSize={16}
+            fontSize={14}
+          />
+
+          <ContextualInfo
+            type={requestState.type}
+            expirationTime={requestState.expirationTime ?? 0}
+            setExpirationTime={requestState.setExpirationTime}
+            walletCurrency={requestState.receivingWalletDescriptor.currency}
+            canSetExpirationTime={requestState.canSetExpirationTime}
+            feesInformation={requestState.feesInformation}
+            shouldShowAutoConvertMinWarning={
+              selfCustodialRequest?.shouldShowAutoConvertMinWarning
+            }
+            autoConvertMinSats={selfCustodialRequest?.autoConvertMinSats}
+            autoConvertMinFiat={selfCustodialRequest?.autoConvertMinFiat}
+          />
+        </View>
       </View>
 
       <SetLightningAddressModal
@@ -386,35 +337,112 @@ const ReceiveScreenContent: React.FC<ReceiveScreenContentProps> = ({
 
 const useStyles = makeStyles(({ colors }) => ({
   screenStyle: {
-    paddingVertical: 12,
     flexGrow: 1,
+    backgroundColor: colors.white,
   },
   loadingContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
-  paymentIdentifier: {
-    alignItems: "center",
-    marginTop: 10,
+  content: {
+    paddingVertical: 20,
     paddingHorizontal: 20,
+    alignItems: "center",
+  },
+
+  // ── Lightning pill ──
+  lightningPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.grey5,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 24,
+  },
+  lightningPillText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.primary,
+  },
+
+  // ── Payment identifier pill ──
+  paymentIdentifier: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 16,
+    backgroundColor: colors.grey5,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    maxWidth: "100%",
   },
   paymentIdentifierText: {
     color: colors.black,
-    fontSize: 16,
-    fontWeight: "400",
-    lineHeight: 22,
-    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "500",
+    flexShrink: 1,
   },
+
+  // ── Hint text ──
+  hintText: {
+    color: colors.grey3,
+    fontSize: 13,
+    fontWeight: "500",
+    textAlign: "center",
+    marginTop: 12,
+    paddingHorizontal: 40,
+  },
+
+  // ── Actions row ──
   actionsRow: {
     flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    columnGap: 10,
+    gap: 12,
+    marginTop: 20,
+    width: "100%",
   },
+  copyButton: {
+    flex: 1,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: colors.grey5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  copyButtonPressed: {
+    backgroundColor: colors.grey6,
+  },
+  copyButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.black,
+  },
+  shareButton: {
+    flex: 1,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  shareButtonPressed: {
+    opacity: 0.85,
+  },
+  shareButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    // Fixed white, not a theme token: this text always sits on the solid
+    // colors.primary button, so it must stay readable regardless of theme.
+    color: "#FFFFFF",
+  },
+
+  // ── Inputs ──
   inputsContainer: {
-    marginTop: 14,
-    paddingHorizontal: 20,
+    marginTop: 20,
+    width: "100%",
     rowGap: 14,
   },
 }))

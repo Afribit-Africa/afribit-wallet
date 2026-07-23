@@ -69,8 +69,6 @@ describe("useDisplayPaymentRequest", () => {
       const { result } = renderHook(() =>
         useDisplayPaymentRequest(
           baseLightningRequest as Parameters<typeof useDisplayPaymentRequest>[0],
-          false,
-          null,
         ),
       )
 
@@ -82,8 +80,6 @@ describe("useDisplayPaymentRequest", () => {
       const { result } = renderHook(() =>
         useDisplayPaymentRequest(
           baseLightningRequest as Parameters<typeof useDisplayPaymentRequest>[0],
-          false,
-          null,
         ),
       )
 
@@ -96,8 +92,6 @@ describe("useDisplayPaymentRequest", () => {
       const { result } = renderHook(() =>
         useDisplayPaymentRequest(
           basePayCodeRequest as Parameters<typeof useDisplayPaymentRequest>[0],
-          false,
-          null,
         ),
       )
 
@@ -109,8 +103,6 @@ describe("useDisplayPaymentRequest", () => {
       const { result } = renderHook(() =>
         useDisplayPaymentRequest(
           basePayCodeRequest as Parameters<typeof useDisplayPaymentRequest>[0],
-          false,
-          null,
         ),
       )
 
@@ -122,49 +114,6 @@ describe("useDisplayPaymentRequest", () => {
       const { result } = renderHook(() =>
         useDisplayPaymentRequest(
           request as Parameters<typeof useDisplayPaymentRequest>[0],
-          false,
-          null,
-        ),
-      )
-
-      expect(result.current.showActions).toBe(false)
-    })
-  })
-
-  describe("onchain", () => {
-    it("returns truncated onchain address", () => {
-      const { result } = renderHook(() =>
-        useDisplayPaymentRequest(
-          baseLightningRequest as Parameters<typeof useDisplayPaymentRequest>[0],
-          true,
-          "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
-        ),
-      )
-
-      expect(mockTruncateMiddle).toHaveBeenCalledWith(
-        "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
-      )
-      expect(result.current.displayPaymentRequest).toBeTruthy()
-    })
-
-    it("shows actions when onchain address exists", () => {
-      const { result } = renderHook(() =>
-        useDisplayPaymentRequest(
-          baseLightningRequest as Parameters<typeof useDisplayPaymentRequest>[0],
-          true,
-          "bc1qtest",
-        ),
-      )
-
-      expect(result.current.showActions).toBe(true)
-    })
-
-    it("hides actions when onchain address is null", () => {
-      const { result } = renderHook(() =>
-        useDisplayPaymentRequest(
-          baseLightningRequest as Parameters<typeof useDisplayPaymentRequest>[0],
-          true,
-          null,
         ),
       )
 
@@ -177,20 +126,14 @@ describe("useDisplayPaymentRequest", () => {
       const { result, rerender } = renderHook(
         ({
           request,
-          isOnChain,
-          addr,
         }: {
           request: Parameters<typeof useDisplayPaymentRequest>[0]
-          isOnChain: boolean
-          addr: string | null
-        }) => useDisplayPaymentRequest(request, isOnChain, addr),
+        }) => useDisplayPaymentRequest(request),
         {
           initialProps: {
             request: baseLightningRequest as Parameters<
               typeof useDisplayPaymentRequest
             >[0],
-            isOnChain: false,
-            addr: null,
           },
         },
       )
@@ -204,8 +147,6 @@ describe("useDisplayPaymentRequest", () => {
 
       rerender({
         request: emptyRequest as Parameters<typeof useDisplayPaymentRequest>[0],
-        isOnChain: false,
-        addr: null,
       })
 
       expect(result.current.displayPaymentRequest).toBe(firstValue)

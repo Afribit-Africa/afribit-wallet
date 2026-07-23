@@ -62,9 +62,7 @@ jest.mock("@app/hooks/use-active-wallet", () => ({
 jest.mock("@app/screens/receive-bitcoin-screen/hooks", () => ({
   useDisplayPaymentRequest: jest.fn(() => ({})),
   useNfcReceive: jest.fn(() => ({})),
-  useOnchainResolver: jest.fn(() => ({})),
   usePaymentRequest: () => mockUsePaymentRequest(),
-  useReceiveCarousel: jest.fn(() => ({ items: [], setIndex: jest.fn() })),
   useReceiveFlow: jest.fn(() => ({})),
 }))
 

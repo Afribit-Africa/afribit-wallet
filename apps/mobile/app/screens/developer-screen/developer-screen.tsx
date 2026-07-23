@@ -25,6 +25,7 @@ import { Button, Text, makeStyles } from "@rn-vui/themed"
 
 import { Screen } from "../../components/screen"
 import { usePriceConversion, useSaveSessionProfile } from "@app/hooks"
+import { useSelfCustodialWallet } from "@app/self-custodial/providers/wallet"
 import useLogout from "../../hooks/use-logout"
 import { addDeviceToken } from "../../utils/notifications"
 import { testProps } from "../../utils/testProps"
@@ -40,6 +41,37 @@ gql`
     }
   }
 `
+
+// dev-only token mint for obtaining SPARK_TOKEN_IDENTIFIER during Phase 1 setup, to be deleted after capturing the identifier
+const SparkTokenIssuerButton: React.FC = () => {
+  const { sdk } = useSelfCustodialWallet()
+
+  const handleMintToken = async () => {
+    try {
+      if (!sdk) {
+        Alert.alert(
+          "Wallet not connected",
+          "Open the app with a connected self-custodial account first.",
+        )
+        return
+      }
+      const metadata = await sdk.getTokenIssuer().createIssuerToken({
+        name: "Afribit Pay Test USD",
+        ticker: "USDB",
+        decimals: 6,
+        isFreezable: false,
+        maxSupply: BigInt(1000000000),
+      })
+      console.log("SPARK_TOKEN_IDENTIFIER:", metadata.identifier)
+      Alert.alert("Token minted", `SPARK_TOKEN_IDENTIFIER:\n${metadata.identifier}`)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      Alert.alert("Failed to mint token", message)
+    }
+  }
+
+  return <Button title="Mint Spark test token" containerStyle={{ marginVertical: 6 }} onPress={handleMintToken} />
+}
 
 const usingHermes = typeof HermesInternal === "object" && HermesInternal !== null
 
@@ -263,6 +295,7 @@ export const DeveloperScreen: React.FC = () => {
                   crashlytics().crash()
                 }}
               />
+              <SparkTokenIssuerButton />
             </>
           )}
           <GaloyInput

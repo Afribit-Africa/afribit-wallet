@@ -441,13 +441,23 @@ export const BuyBitcoinScreen: React.FC = () => {
           </View>
 
           {/* Lightning destination info */}
-          {lightningAddress && (
+          {lightningAddress ? (
             <View style={styles.destinationRow}>
               <Text style={styles.destinationLabel}>Sats delivered to</Text>
               <Text style={styles.destinationValue} numberOfLines={1}>
                 {lightningAddress}
               </Text>
             </View>
+          ) : (
+            <Pressable
+              style={styles.destinationRow}
+              onPress={() => navigation.navigate("settings")}
+            >
+              <Text style={styles.destinationLabel}>
+                Set a Lightning address in Settings to enable buying
+              </Text>
+              <Text style={styles.destinationValue}>Set up now →</Text>
+            </Pressable>
           )}
 
           {/* Buy Button */}

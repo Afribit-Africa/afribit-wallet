@@ -1,7 +1,7 @@
 import React from "react"
 import { Alert } from "react-native"
 import { Network as mockSparkNetwork } from "@breeztech/breez-sdk-spark-react-native"
-import { act, render, waitFor } from "@testing-library/react-native"
+import { act, render, fireEvent, waitFor } from "@testing-library/react-native"
 
 import { loadLocale } from "@app/i18n/i18n-util.sync"
 import { Network } from "@app/graphql/generated"
@@ -139,8 +139,11 @@ describe("ScanningQRCodeScreen", () => {
       createPaymentDetail: jest.fn(),
     })
 
-    await renderScreen()
+    const { getByTestId } = await renderScreen()
     await fireScan("lnbc1qrcode")
+    await act(async () => {
+      fireEvent.press(getByTestId("detected-continue"))
+    })
 
     expect(mockResolveDestination).toHaveBeenCalledWith(
       expect.objectContaining({ rawInput: "lnbc1qrcode", inputSource: "qr" }),
@@ -160,8 +163,11 @@ describe("ScanningQRCodeScreen", () => {
       createPaymentDetail: jest.fn(),
     })
 
-    await renderScreen()
+    const { getByTestId } = await renderScreen()
     await fireScan("sparkrt1qabc")
+    await act(async () => {
+      fireEvent.press(getByTestId("detected-continue"))
+    })
 
     expect(mockResolveDestination).toHaveBeenCalledWith(
       expect.objectContaining({ rawInput: "sparkrt1qabc" }),
@@ -180,8 +186,11 @@ describe("ScanningQRCodeScreen", () => {
       createPaymentDetail: jest.fn(),
     })
 
-    await renderScreen()
+    const { getByTestId } = await renderScreen()
     await fireScan("alice@blink.sv")
+    await act(async () => {
+      fireEvent.press(getByTestId("detected-continue"))
+    })
 
     expect(mockResolveDestination).toHaveBeenCalledWith(
       expect.objectContaining({ lnurlDomains: [] }),
@@ -198,8 +207,11 @@ describe("ScanningQRCodeScreen", () => {
       createPaymentDetail: jest.fn(),
     })
 
-    await renderScreen()
+    const { getByTestId } = await renderScreen()
     await fireScan("alice@blink.sv")
+    await act(async () => {
+      fireEvent.press(getByTestId("detected-continue"))
+    })
 
     expect(mockResolveDestination).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -219,8 +231,11 @@ describe("ScanningQRCodeScreen", () => {
     }
     mockResolveDestination.mockResolvedValue(dest)
 
-    await renderScreen()
+    const { getByTestId } = await renderScreen()
     await fireScan("lnbc1...")
+    await act(async () => {
+      fireEvent.press(getByTestId("detected-continue"))
+    })
 
     await waitFor(() =>
       expect(mockReplace).toHaveBeenCalledWith("sendBitcoinDetails", {
@@ -237,8 +252,11 @@ describe("ScanningQRCodeScreen", () => {
     }
     mockResolveDestination.mockResolvedValue(dest)
 
-    await renderScreen()
+    const { getByTestId } = await renderScreen()
     await fireScan("lnurlw1...")
+    await act(async () => {
+      fireEvent.press(getByTestId("detected-continue"))
+    })
 
     await waitFor(() =>
       expect(mockReset).toHaveBeenCalledWith({
@@ -285,9 +303,12 @@ describe("ScanningQRCodeScreen", () => {
       createPaymentDetail: jest.fn(),
     })
 
-    await renderScreen()
+    const { getByTestId } = await renderScreen()
     await fireScan("lnbc1same")
     await fireScan("lnbc1same")
+    await act(async () => {
+      fireEvent.press(getByTestId("detected-continue"))
+    })
 
     expect(mockResolveDestination).toHaveBeenCalledTimes(1)
   })

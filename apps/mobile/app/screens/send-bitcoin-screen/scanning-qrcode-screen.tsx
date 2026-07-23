@@ -3,6 +3,7 @@ import {
   Alert,
   Dimensions,
   Linking,
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -28,6 +29,7 @@ import { useSelfCustodialWallet } from "@app/self-custodial/providers/wallet"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import { logParseDestinationResult } from "@app/utils/analytics"
 import { toastShow } from "@app/utils/toast"
+import { testProps } from "@app/utils/testProps"
 import Clipboard from "@react-native-clipboard/clipboard"
 import crashlytics from "@react-native-firebase/crashlytics"
 import { useIsFocused, useNavigation } from "@react-navigation/native"
@@ -39,6 +41,7 @@ import { Screen } from "../../components/screen"
 import { RootStackParamList } from "../../navigation/stack-param-lists"
 import { DestinationDirection } from "./payment-destination/index.types"
 import { resolveDestination } from "./payment-destination/resolve-destination"
+import { parseKeQr, KeQrResult } from "./ke-qr-parser"
 
 const { width: screenWidth } = Dimensions.get("window")
 const { height: screenHeight } = Dimensions.get("window")
@@ -83,6 +86,11 @@ export const ScanningQRCodeScreen: React.FC = () => {
   const [scannedCache, setScannedCache] = React.useState(new Set<string>())
   const [hasPermission, setHasPermission] = React.useState(false)
   const [isCameraUnavailable, setIsCameraUnavailable] = React.useState(false)
+  const [detectedData, setDetectedData] = React.useState<{
+    qrResult: KeQrResult
+    rawData: string
+  } | null>(null)
+  const [showComingSoon, setShowComingSoon] = React.useState(false)
 
   const { myWalletIds, bitcoinNetwork, lnurlDomains } = useScanContext()
   const [accountDefaultWalletQuery] = useAccountDefaultWalletLazyQuery({
@@ -102,6 +110,8 @@ export const ScanningQRCodeScreen: React.FC = () => {
   React.useEffect(() => {
     if (!isFocused) {
       setScannedCache(new Set<string>())
+      setDetectedData(null)
+      setShowComingSoon(false)
     }
   }, [isFocused])
 
@@ -279,12 +289,17 @@ export const ScanningQRCodeScreen: React.FC = () => {
 
   const handleCodeScanned = React.useCallback(
     (data: string) => {
-      if (!scannedCache.has(data)) {
-        setScannedCache(new Set(scannedCache).add(data))
-        processInvoice(data)
+      if (scannedCache.has(data) || pending) return
+      setScannedCache(new Set(scannedCache).add(data))
+
+      const qrResult = parseKeQr(data)
+      if (qrResult.type === "lightning" || qrResult.type === "ke_qr") {
+        setDetectedData({ qrResult, rawData: data })
+        return
       }
+      processInvoice(data)
     },
-    [scannedCache, processInvoice],
+    [scannedCache, pending, processInvoice],
   )
 
   const styles = useStyles()
@@ -327,6 +342,24 @@ export const ScanningQRCodeScreen: React.FC = () => {
       }
     }
   }
+
+  const handleContinue = React.useCallback(() => {
+    if (!detectedData) return
+    if (detectedData.qrResult.type === "lightning") {
+      setDetectedData(null)
+      processInvoice(detectedData.rawData)
+      return
+    }
+    if (detectedData.qrResult.type === "ke_qr") {
+      setDetectedData(null)
+      setShowComingSoon(true)
+    }
+  }, [detectedData, processInvoice])
+
+  const handleDismissDetected = React.useCallback(() => {
+    setDetectedData(null)
+    setPending(false)
+  }, [])
 
   const onError = React.useCallback(
     (event: { nativeEvent: { errorMessage: string } }) => {
@@ -419,6 +452,89 @@ export const ScanningQRCodeScreen: React.FC = () => {
           </Pressable>
         </View>
       </View>
+
+      {/* ─── Detected Rail Bottom Sheet ─── */}
+      <Modal
+        visible={detectedData !== null}
+        animationType="slide"
+        transparent
+        onRequestClose={handleDismissDetected}
+      >
+        <Pressable style={styles.detectedOverlay} onPress={handleDismissDetected}>
+          <Pressable style={styles.detectedSheet} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.detectedHandle} />
+            {detectedData?.qrResult ? (
+              <>
+                {detectedData.qrResult.type === "lightning" ? (
+                  <View style={styles.detectedPill}>
+                    <GaloyIcon name="lightning" size={14} color={colors.primary} />
+                    <Text style={styles.detectedPillText}>Lightning</Text>
+                  </View>
+                ) : (
+                  <View
+                    style={[
+                      styles.detectedPill,
+                      { backgroundColor: colors.backdropWhite },
+                    ]}
+                  >
+                    <GaloyIcon name="lightning" size={14} color={colors.primary} />
+                    <Text style={styles.detectedPillText}>M-Pesa</Text>
+                  </View>
+                )}
+                <Text style={styles.detectedMerchant}>
+                  {detectedData.qrResult.type === "ke_qr" &&
+                  detectedData.qrResult.merchantName
+                    ? detectedData.qrResult.merchantName
+                    : detectedData.qrResult.type === "ke_qr"
+                      ? "M-Pesa Merchant"
+                      : detectedData.rawData}
+                </Text>
+                <Text style={styles.detectedSubDetail}>
+                  Detected automatically
+                  {detectedData.qrResult.type === "ke_qr" &&
+                  detectedData.qrResult.amount
+                    ? ` · KES ${detectedData.qrResult.amount}`
+                    : ""}
+                </Text>
+                <GaloyPrimaryButton
+                  title="Continue"
+                  onPress={handleContinue}
+                  containerStyle={styles.detectedContinue}
+                  {...testProps("detected-continue")}
+                />
+                <Text style={styles.detectedFooter}>
+                  One scan for Lightning & M-Pesa — no switching
+                </Text>
+              </>
+            ) : null}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* ─── M-Pesa Coming Soon Modal ─── */}
+      <Modal
+        visible={showComingSoon}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowComingSoon(false)}
+      >
+        <View style={styles.comingSoonOverlay}>
+          <View style={styles.comingSoonSheet}>
+            <Text type="h2" style={styles.comingSoonTitle}>
+              M-Pesa payments are coming soon
+            </Text>
+            <Text style={styles.comingSoonBody}>
+              Off-ramp payouts are in active development. You'll be able to spend your
+              bitcoin at any M-Pesa till, paybill, or phone number right from this scan
+              screen — but we're not quite there yet.
+            </Text>
+            <GaloyPrimaryButton
+              title="Got it"
+              onPress={() => setShowComingSoon(false)}
+            />
+          </View>
+        </View>
+      </Modal>
     </Screen>
   )
 }
@@ -475,5 +591,96 @@ const useStyles = makeStyles(({ colors }) => ({
   permissionMissingText: {
     width: "80%",
     textAlign: "center",
+  },
+
+  // ── DETECTED SHEET ──
+  detectedOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  detectedSheet: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 24,
+    paddingBottom: 34,
+    alignItems: "center",
+  },
+  detectedHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.grey3,
+    marginTop: 8,
+    marginBottom: 20,
+    alignSelf: "center",
+  },
+  detectedPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.grey5,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 16,
+  },
+  detectedPillText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.primary,
+  },
+  detectedMerchant: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: colors.black,
+    marginBottom: 6,
+    textAlign: "center",
+  },
+  detectedSubDetail: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: colors.grey3,
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  detectedContinue: {
+    marginBottom: 16,
+    alignSelf: "stretch",
+  },
+  detectedFooter: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: colors.grey3,
+    textAlign: "center",
+  },
+
+  // ── COMING SOON ──
+  comingSoonOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  comingSoonSheet: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    alignItems: "center",
+    gap: 16,
+  },
+  comingSoonTitle: {
+    color: colors.black,
+    textAlign: "center",
+  },
+  comingSoonBody: {
+    fontSize: 14,
+    fontWeight: "400",
+    color: colors.grey3,
+    textAlign: "center",
+    lineHeight: 20,
   },
 }))

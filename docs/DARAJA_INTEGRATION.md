@@ -59,3 +59,15 @@ Fields: `InitiatorName`, `SecurityCredential` (see below), `CommandID` (`Busines
 - Whether the M-Pesa for Business self-service portal actually supports a payout-only (no collections) use case cleanly, or whether this needs a direct conversation with Safaricom Business support to configure correctly.
 - Where the callback receiver (`ResultURL`/`QueueTimeOutURL` handler) will live — this is a real backend, however small, that doesn't exist yet.
 - Till-specific B2B `CommandID` value (found `BusinessPayBill` for paybills; the Buy-Goods/till equivalent needs confirming directly from Safaricom's current API reference once portal access exists).
+
+## Update 2026-07-24: real sandbox app created, on Daraja 3.0
+
+Eddie created a sandbox app ("Afribit Africa") and provided real Consumer Key/Secret (stored in `apps/mobile/.env.local`, gitignored). Two things changed the picture:
+
+**Daraja 3.0 is genuinely new** — Safaricom launched it in November 2025 as a full platform overhaul (cloud-native, much higher throughput). Everything researched above (endpoint paths, B2C/B2B naming) came from public guides that mostly predate this and may not exactly match the 3.0 platform's current structure.
+
+**The sandbox app's assigned products are more specific than plain "B2C"/"B2B"**: `B2B-USSDPush2Till-Product` and `M-PESA EXPRESS Sandbox` (Passkey and Short Code both show "N/A" on the app as created). "USSD Push to Till" sounds like it may work differently from a blind B2B API call — possibly the till operator gets a confirmation prompt, similar in spirit to how STK push prompts a paying customer, rather than a silent transfer. This is a reasonable guess, not a confirmed fact.
+
+**I could not find public documentation for `B2B-USSDPush2Till-Product` specifically** — two separate searches came up empty. This strongly suggests the real technical reference for this product is gated behind a logged-in developer.safaricom.co.ke session tied to an app that has the product assigned, which Eddie now has and I don't. **Next step: Eddie should open the API reference/Postman collection for this specific product from the dashboard and share it** (screenshots of the endpoint docs, or an exported Postman collection, both work) so the actual request/response shape can be confirmed rather than assumed.
+
+In the meantime, OAuth token generation (Part 2's authentication section) doesn't depend on the product specifics and can be verified against the real sandbox credentials right away.

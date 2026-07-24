@@ -1,4 +1,4 @@
-import React, { Dispatch, useCallback, useState } from "react"
+import React, { useCallback, useState } from "react"
 import { View, TouchableOpacity } from "react-native"
 
 import { GaloyIcon } from "@app/components/atomic/galoy-icon"
@@ -8,16 +8,43 @@ import { useI18nContext } from "@app/i18n/i18n-react"
 import { CheckBox, Text, makeStyles, useTheme } from "@rn-vui/themed"
 
 import { testProps } from "../../utils/testProps"
-import {
-  DestinationState,
-  SendBitcoinActions,
-  SendBitcoinDestinationAction,
-  SendBitcoinDestinationState,
-} from "./send-bitcoin-reducer"
+
+/** Inlined from the former send-bitcoin-reducer — kept self-contained so this
+ *  component can be carried over defensively (per product instruction) without
+ *  depending on the now-deleted reducer. The new Send screen does not wire into
+ *  this modal today because it uses a simplified single-field model, but the
+ *  component is preserved so a future intraledger-confirmation flow can reuse it. */
+export const DestinationState = {
+  Entering: "Entering",
+  Validating: "Validating",
+  Valid: "Valid",
+  Invalid: "Invalid",
+  PhoneInvalid: "PhoneInvalid",
+  PhoneNotAllowed: "PhoneNotAllowed",
+  RequiresUsernameConfirmation: "RequiresUsernameConfirmation",
+} as const
+export type DestinationState = (typeof DestinationState)[keyof typeof DestinationState]
+
+export const SendBitcoinActions = {
+  SetUnparsedDestination: "SetUnparsedDestination",
+  SetConfirmed: "SetConfirmed",
+} as const
+
+export type SendBitcoinDestinationAction =
+  | { type: typeof SendBitcoinActions.SetUnparsedDestination; payload: { unparsedDestination: string } }
+  | { type: typeof SendBitcoinActions.SetConfirmed; payload: { unparsedDestination: string } }
+
+export type SendBitcoinDestinationState = {
+  unparsedDestination: string
+  destinationState: DestinationState
+  confirmationUsernameType?: { type: string; username: string }
+  destination?: unknown
+  invalidDestination?: unknown
+}
 
 export type ConfirmDestinationModalProps = {
   destinationState: SendBitcoinDestinationState
-  dispatchDestinationStateAction: Dispatch<SendBitcoinDestinationAction>
+  dispatchDestinationStateAction: React.Dispatch<SendBitcoinDestinationAction>
 }
 
 export const ConfirmDestinationModal: React.FC<ConfirmDestinationModalProps> = ({
@@ -106,26 +133,11 @@ export const ConfirmDestinationModal: React.FC<ConfirmDestinationModalProps> = (
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  modalCard: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 18,
-  },
-  warningText: {
-    textAlign: "center",
-  },
   body: {
     rowGap: 12,
   },
-  buttonContainer: {
-    rowGap: 12,
-  },
-  titleContainer: {
-    marginBottom: 12,
-  },
-  checkBox: {
-    paddingLeft: 0,
-    backgroundColor: "transparent",
+  warningText: {
+    textAlign: "center",
   },
   checkBoxTouchable: {
     marginTop: 12,
@@ -136,6 +148,10 @@ const useStyles = makeStyles(({ colors }) => ({
     alignItems: "center",
     backgroundColor: colors.grey5,
     borderRadius: 8,
+  },
+  checkBox: {
+    paddingLeft: 0,
+    backgroundColor: "transparent",
   },
   checkBoxText: {
     flex: 1,

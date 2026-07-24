@@ -605,7 +605,7 @@ export const HomeScreen: React.FC = () => {
 
   type Target =
     | "scanningQRCode"
-    | "sendBitcoinDestination"
+    | "sendManual"
     | "receiveBitcoin"
     | "conversionDetails"
 
@@ -762,7 +762,7 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.actionsRow}>
           <Pressable
             style={styles.actionButton}
-            onPress={() => onMenuClick("sendBitcoinDestination")}
+            onPress={() => onMenuClick("sendManual")}
           >
             <View style={styles.smallActionCircle}>
               <GaloyIcon name="send" size={22} color={colors.black} />

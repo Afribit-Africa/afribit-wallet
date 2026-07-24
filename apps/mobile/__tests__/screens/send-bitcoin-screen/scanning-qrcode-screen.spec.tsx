@@ -222,7 +222,7 @@ describe("ScanningQRCodeScreen", () => {
     )
   })
 
-  it("navigates to sendBitcoinDetails on a valid Send destination", async () => {
+  it("navigates to sendConfirm on a valid Send destination", async () => {
     const dest = {
       valid: true,
       destinationDirection: DestinationDirection.Send,
@@ -238,7 +238,7 @@ describe("ScanningQRCodeScreen", () => {
     })
 
     await waitFor(() =>
-      expect(mockReplace).toHaveBeenCalledWith("sendBitcoinDetails", {
+      expect(mockReplace).toHaveBeenCalledWith("sendConfirm", {
         paymentDestination: dest,
       }),
     )

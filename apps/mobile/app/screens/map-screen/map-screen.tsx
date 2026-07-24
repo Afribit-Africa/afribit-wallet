@@ -165,7 +165,7 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleCalloutPress = (item: MapMarker) => {
     if (isAuthed || isSelfCustodial) {
-      navigation.navigate("sendBitcoinDestination", { username: item.username })
+      navigation.navigate("sendManual", { username: item.username })
     } else {
       navigation.navigate("acceptTermsAndConditions", { flow: "phone" })
     }

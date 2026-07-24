@@ -12,7 +12,6 @@ import {
   PaymentDestination,
   ReceiveDestination,
 } from "@app/screens/send-bitcoin-screen/payment-destination/index.types"
-import { PaymentDetail } from "@app/screens/send-bitcoin-screen/payment-details/index.types"
 import { PaymentSendCompletedStatus } from "@app/screens/send-bitcoin-screen/use-send-payment"
 import { AccountTypeMode } from "@app/types/account"
 import { DisplayCurrency, MoneyAmount, WalletOrDisplayCurrency } from "@app/types/amounts"
@@ -47,21 +46,17 @@ export type RootStackParamList = {
   earnsSection: { section: EarnSectionType; isAvailable: boolean }
   earnsQuiz: { id: string; isAvailable: boolean }
   scanningQRCode: undefined
+  sendManual?: {
+    payment?: string
+    username?: string
+  }
+  sendConfirm: {
+    paymentDestination: PaymentDestination
+  }
   settings: undefined
   addressScreen: undefined
   defaultWallet: undefined
   theme: undefined
-  sendBitcoinDestination?: {
-    payment?: string
-    username?: string
-    scanPressed?: number
-  }
-  sendBitcoinDetails: {
-    paymentDestination: PaymentDestination
-  }
-  sendBitcoinConfirmation: {
-    paymentDetail: PaymentDetail<WalletCurrency>
-  }
   conversionDetails: undefined
   conversionConfirmation: {
     fromWalletCurrency: WalletCurrency

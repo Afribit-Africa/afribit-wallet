@@ -108,7 +108,7 @@ export const WebViewScreen: React.FC<Props> = ({ route }) => {
             return { paymentRequest: "paymentRequest" }
           },
           sendPayment: async (paymentRequestStr) => {
-            navigate("sendBitcoinDestination", {
+            navigate("sendManual", {
               payment: paymentRequestStr,
             })
 

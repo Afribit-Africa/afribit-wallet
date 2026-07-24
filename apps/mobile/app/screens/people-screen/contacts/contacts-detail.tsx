@@ -106,7 +106,7 @@ export const ContactsDetailScreenJSX: React.FC<ContactDetailScreenProps> = ({
             size="large"
             text={LL.HomeScreen.send()}
             onPress={() =>
-              navigation.navigate("sendBitcoinDestination", {
+              navigation.navigate("sendManual", {
                 username: contact.username,
               })
             }

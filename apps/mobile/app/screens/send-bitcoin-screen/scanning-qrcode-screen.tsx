@@ -71,7 +71,7 @@ gql`
 export const ScanningQRCodeScreen: React.FC = () => {
   const navigation =
     useNavigation<
-      NativeStackNavigationProp<RootStackParamList, "sendBitcoinDestination">
+      NativeStackNavigationProp<RootStackParamList, "scanningQRCode">
     >()
   const isFocused = useIsFocused()
 
@@ -178,9 +178,9 @@ export const ScanningQRCodeScreen: React.FC = () => {
 
         if (destination.valid) {
           if (destination.destinationDirection === DestinationDirection.Send) {
-            navigation.replace("sendBitcoinDetails", {
-              paymentDestination: destination,
-            })
+navigation.replace("sendConfirm", {
+                paymentDestination: destination,
+              })
             return
           }
 

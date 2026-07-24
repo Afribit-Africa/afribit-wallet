@@ -71,7 +71,7 @@ const Contact = ({
       <Text type="p1">{displayHandle}</Text>
       <GaloyIconButton
         onPress={() =>
-          rootNavigation.navigate("sendBitcoinDestination", {
+          rootNavigation.navigate("sendManual", {
             username: contact.handle,
           })
         }

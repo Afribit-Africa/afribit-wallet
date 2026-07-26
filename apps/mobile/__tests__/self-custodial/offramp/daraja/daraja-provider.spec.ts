@@ -3,9 +3,11 @@ import {
   buildDarajaEndpointConfig,
   buildDarajaRequestBody,
   computeDarajaQuote,
+  createDarajaPayoutProvider,
 } from "@app/self-custodial/offramp/daraja/daraja-payout-provider"
 import { createOAuthClient } from "@app/self-custodial/offramp/daraja/oauth-client"
 import { encryptSecurityCredential } from "@app/self-custodial/offramp/daraja/security-credential"
+import * as securityCredentialModule from "@app/self-custodial/offramp/daraja/security-credential"
 import {
   DARAJA_SANDBOX_SHORTCODE,
   DARAJA_SANDBOX_PASSKEY,
@@ -63,7 +65,7 @@ describe("computeDarajaQuote", () => {
 describe("buildDarajaEndpointConfig", () => {
   it("routes PhoneNumber to B2C with BusinessPayment", () => {
     const cfg = buildDarajaEndpointConfig("PhoneNumber", "254708374149")
-    expect(cfg.path).toBe("/mpesa/b2c/v1/paymentrequest")
+    expect(cfg.path).toBe("/mpesa/b2c/v3/paymentrequest")
     expect(cfg.commandId).toBe("BusinessPayment")
     expect(cfg.partyB).toBe("254708374149")
     expect(cfg.extraFields).toBeUndefined()
@@ -78,11 +80,26 @@ describe("buildDarajaEndpointConfig", () => {
     expect(cfg.extraFields?.AccountReference).toMatch(/^PAYOUT-/)
   })
 
-  it("routes TillNumber to B2B with UNCONFIRMED BusinessBuyGoods", () => {
+  it("routes TillNumber to B2B with BusinessBuyGoods", () => {
     const cfg = buildDarajaEndpointConfig("TillNumber", "123456")
     expect(cfg.path).toBe("/mpesa/b2b/v1/paymentrequest")
     expect(cfg.commandId).toBe("BusinessBuyGoods")
     expect(cfg.partyB).toBe("123456")
+    expect(cfg.extraFields?.AccountReference).toMatch(/^PAYOUT-/)
+  })
+
+  it("uses supplied accountReference for PayBill instead of auto-generating", () => {
+    const cfg = buildDarajaEndpointConfig("PayBill", "247247", "ACC-999")
+    expect(cfg.extraFields?.AccountReference).toBe("ACC-999")
+  })
+
+  it("uses supplied accountReference for TillNumber instead of auto-generating", () => {
+    const cfg = buildDarajaEndpointConfig("TillNumber", "123456", "MYREF")
+    expect(cfg.extraFields?.AccountReference).toBe("MYREF")
+  })
+
+  it("falls back to auto-generated AccountReference when none supplied", () => {
+    const cfg = buildDarajaEndpointConfig("PayBill", "247247")
     expect(cfg.extraFields?.AccountReference).toMatch(/^PAYOUT-/)
   })
 })
@@ -100,6 +117,7 @@ describe("buildDarajaRequestBody", () => {
   const resultUrl = "https://example.com/callback"
   const timeoutUrl = "https://example.com/timeout"
   const kesAmount = 500
+  const originatorId = "test-originator-id-123"
 
   it("builds a valid B2C body for PhoneNumber", () => {
     const config = buildDarajaEndpointConfig("PhoneNumber", "254708374149")
@@ -111,9 +129,11 @@ describe("buildDarajaRequestBody", () => {
       securityCredential: cred,
       resultUrl,
       timeoutUrl,
+      originatorConversationId: originatorId,
+      isB2B: false,
     })
 
-    expect(body.InitiatorName).toBe(initiator)
+    expect(body.OriginatorConversationID).toBe(originatorId)
     expect(body.SecurityCredential).toBe(cred)
     expect(body.CommandID).toBe("BusinessPayment")
     expect(body.Amount).toBe("500")
@@ -122,7 +142,11 @@ describe("buildDarajaRequestBody", () => {
     expect(body.ResultURL).toBe(resultUrl)
     expect(body.QueueTimeOutURL).toBe(timeoutUrl)
     expect(body.Remarks).toBe("Afribit Pay off-ramp")
-    expect(body.Occasion).toBe("Afribit")
+    expect((body as Record<string, unknown>).Occassion).toBe("Afribit")
+    expect((body as Record<string, unknown>).InitiatorName).toBe(initiator)
+    expect((body as Record<string, unknown>).Initiator).toBeUndefined()
+    expect((body as Record<string, unknown>).SenderIdentifierType).toBeUndefined()
+    expect((body as Record<string, unknown>).RecieverIdentifierType).toBeUndefined()
     expect((body as Record<string, unknown>).AccountReference).toBeUndefined()
   })
 
@@ -136,11 +160,19 @@ describe("buildDarajaRequestBody", () => {
       securityCredential: cred,
       resultUrl,
       timeoutUrl,
+      originatorConversationId: originatorId,
+      isB2B: true,
     })
 
-    expect(body.CommandID).toBe("BusinessPayBill")
-    expect(body.PartyB).toBe("247247")
-    expect((body as Record<string, unknown>).AccountReference).toMatch(/^PAYOUT-/)
+    const b2bBody = body as Record<string, unknown>
+    expect(b2bBody.OriginatorConversationID).toBe(originatorId)
+    expect(b2bBody.CommandID).toBe("BusinessPayBill")
+    expect(b2bBody.PartyB).toBe("247247")
+    expect(b2bBody.Initiator).toBe(initiator)
+    expect(b2bBody.InitiatorName).toBeUndefined()
+    expect(b2bBody.SenderIdentifierType).toBe("4")
+    expect(b2bBody.RecieverIdentifierType).toBe("4")
+    expect(b2bBody.AccountReference).toMatch(/^PAYOUT-/)
   })
 
   it("includes AccountReference for TillNumber", () => {
@@ -153,11 +185,19 @@ describe("buildDarajaRequestBody", () => {
       securityCredential: cred,
       resultUrl,
       timeoutUrl,
+      originatorConversationId: originatorId,
+      isB2B: true,
     })
 
-    expect(body.CommandID).toBe("BusinessBuyGoods")
-    expect(body.PartyB).toBe("123456")
-    expect((body as Record<string, unknown>).AccountReference).toMatch(/^PAYOUT-/)
+    const b2bBody = body as Record<string, unknown>
+    expect(b2bBody.OriginatorConversationID).toBe(originatorId)
+    expect(b2bBody.CommandID).toBe("BusinessBuyGoods")
+    expect(b2bBody.PartyB).toBe("123456")
+    expect(b2bBody.Initiator).toBe(initiator)
+    expect(b2bBody.InitiatorName).toBeUndefined()
+    expect(b2bBody.SenderIdentifierType).toBe("4")
+    expect(b2bBody.RecieverIdentifierType).toBe("4")
+    expect(b2bBody.AccountReference).toMatch(/^PAYOUT-/)
   })
 })
 
@@ -349,5 +389,269 @@ describe("createOAuthClient", () => {
       | { Authorization?: string }
       | undefined
     expect(authHeader?.Authorization).toBe(`Basic ${expectedBase64}`)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// createDarajaPayoutProvider — SecurityCredential resolution
+// ---------------------------------------------------------------------------
+
+describe("createDarajaPayoutProvider credential resolution", () => {
+  const TEST_RATE = 400_000
+  const quote = computeDarajaQuote(100_000, TEST_RATE)
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it("uses precomputed SecurityCredential verbatim, skips encryption entirely", async () => {
+    const encryptSpy = jest.spyOn(securityCredentialModule, "encryptSecurityCredential")
+
+    jest.spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ access_token: "tok", expires_in: 3599 }), {
+          status: 200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ResponseCode: "0", ResponseDescription: "ok" }), {
+          status: 200,
+        }),
+      )
+
+    const provider = createDarajaPayoutProvider({
+      btcToKesRate: TEST_RATE,
+      consumerKey: "ck",
+      consumerSecret: "cs",
+      securityCredential: "precomputed-sc-value",
+    })
+
+    await provider.executePayout({
+      quote,
+      destinationType: "PhoneNumber",
+      destination: "254708374149",
+      idempotencyKey: "precomputed-test-key",
+    })
+
+    expect(encryptSpy).not.toHaveBeenCalled()
+  })
+
+  it("falls back to encryptSecurityCredential when no precomputed credential is set", async () => {
+    const encryptSpy = jest.spyOn(securityCredentialModule, "encryptSecurityCredential")
+
+    jest.spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ access_token: "tok", expires_in: 3599 }), {
+          status: 200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ResponseCode: "0", ResponseDescription: "ok" }), {
+          status: 200,
+        }),
+      )
+
+    const provider = createDarajaPayoutProvider({
+      btcToKesRate: TEST_RATE,
+      consumerKey: "ck",
+      consumerSecret: "cs",
+      certificatePem:
+        "-----BEGIN CERTIFICATE-----\nMOCK\n-----END CERTIFICATE-----",
+      initiatorPassword: "testpassword",
+    })
+
+    await provider.executePayout({
+      quote,
+      destinationType: "PhoneNumber",
+      destination: "254708374149",
+      idempotencyKey: "fallback-test-key",
+    })
+
+    expect(encryptSpy).toHaveBeenCalledWith(
+      "-----BEGIN CERTIFICATE-----\nMOCK\n-----END CERTIFICATE-----",
+      "testpassword",
+    )
+  })
+
+  it("throws when neither securityCredential nor cert+password are provided", async () => {
+    const provider = createDarajaPayoutProvider({
+      btcToKesRate: TEST_RATE,
+      consumerKey: "ck",
+      consumerSecret: "cs",
+    })
+
+    await expect(
+      provider.executePayout({
+        quote,
+        destinationType: "PhoneNumber",
+        destination: "254708374149",
+        idempotencyKey: "neither-test-key",
+      }),
+    ).rejects.toThrow("No SecurityCredential available")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// getPayoutStatus — backend callback-receiver fallback
+// ---------------------------------------------------------------------------
+
+describe("getPayoutStatus backend fallback", () => {
+  const TEST_RATE = 400_000
+  const quote = computeDarajaQuote(100_000, TEST_RATE)
+
+  const makeProvider = () =>
+    createDarajaPayoutProvider({
+      btcToKesRate: TEST_RATE,
+      consumerKey: "ck",
+      consumerSecret: "cs",
+      securityCredential: "precomputed-sc-value",
+      resultUrl: "https://pay.afribit.africa/daraja/callback/result",
+    })
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it("returns fulfilled when backend reports isSuccess:true", async () => {
+    jest.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          originatorConversationID: "test-payout-123",
+          isSuccess: true,
+          resultDesc: "The service request is processed successfully.",
+          resultParameters: { TransactionAmount: 500 },
+          updatedAt: "2026-07-26T10:30:00.000Z",
+        }),
+        { status: 200 },
+      ),
+    )
+
+    const provider = makeProvider()
+    const result = await provider.getPayoutStatus("test-payout-123")
+
+    expect(result.payoutId).toBe("test-payout-123")
+    expect(result.status).toBe("fulfilled")
+    expect(result.message).toContain("processed")
+    expect(result.kesAmount).toBe(500)
+    expect(result.destination).toBe("")
+  })
+
+  it("returns failed when backend reports isSuccess:false", async () => {
+    jest.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          originatorConversationID: "failed-payout",
+          isSuccess: false,
+          resultDesc: "M-Pesa payment declined",
+          resultParameters: {},
+          updatedAt: "2026-07-26T11:00:00.000Z",
+        }),
+        { status: 200 },
+      ),
+    )
+
+    const provider = makeProvider()
+    const result = await provider.getPayoutStatus("failed-payout")
+
+    expect(result.status).toBe("failed")
+    expect(result.message).toContain("declined")
+    expect(result.kesAmount).toBe(0)
+  })
+
+  it("falls back to 'processing' when backend returns 404", async () => {
+    jest.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response("Not Found", { status: 404 }),
+    )
+
+    const provider = makeProvider()
+    const result = await provider.getPayoutStatus("not-found-yet")
+
+    expect(result.payoutId).toBe("not-found-yet")
+    expect(result.status).toBe("processing")
+    expect(result.message).toContain("Awaiting callback")
+  })
+
+  it("falls back to 'processing' on network error without crashing", async () => {
+    jest.spyOn(global, "fetch").mockRejectedValueOnce(new Error("Connection refused"))
+
+    const provider = makeProvider()
+    const result = await provider.getPayoutStatus("network-flake")
+
+    expect(result.payoutId).toBe("network-flake")
+    expect(result.status).toBe("processing")
+    expect(result.message).toContain("Awaiting callback")
+  })
+
+  it("falls back to 'processing' on unexpected non-200 non-404 status", async () => {
+    jest.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response("Internal Server Error", { status: 500 }),
+    )
+
+    const provider = makeProvider()
+    const result = await provider.getPayoutStatus("server-error")
+
+    expect(result.status).toBe("processing")
+  })
+
+  it("derives status URL from resultUrl origin", async () => {
+    const fetchSpy = jest.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response("Not Found", { status: 404 }),
+    )
+
+    const provider = makeProvider()
+    await provider.getPayoutStatus("my-payout-id")
+
+    const [url] = fetchSpy.mock.calls[0]
+    expect(url).toBe(
+      "https://pay.afribit.africa/daraja/callback/status/my-payout-id",
+    )
+  })
+
+  it("uses local cache when payout was executed in this session", async () => {
+    const statusFetchSpy = jest.spyOn(global, "fetch")
+
+    // First mock the OAuth + Daraja API calls for executePayout
+    statusFetchSpy
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ access_token: "tok", expires_in: 3599 }), {
+          status: 200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ResponseCode: "0", ResponseDescription: "ok" }), {
+          status: 200,
+        }),
+      )
+
+    const provider = createDarajaPayoutProvider({
+      btcToKesRate: TEST_RATE,
+      consumerKey: "ck",
+      consumerSecret: "cs",
+      securityCredential: "precomputed-sc-value",
+      resultUrl: "https://pay.afribit.africa/daraja/callback/result",
+    })
+
+    await provider.executePayout({
+      quote,
+      destinationType: "PhoneNumber",
+      destination: "254708374149",
+      idempotencyKey: "executed-then-queried",
+    })
+
+    expect(statusFetchSpy).toHaveBeenCalledTimes(2)
+
+    const result = await provider.getPayoutStatus("executed-then-queried")
+    expect(result.status).toBe("processing")
+    expect(result.message).toContain("M-Pesa payout submitted")
+    // Should not have made a third fetch call
+    expect(statusFetchSpy).toHaveBeenCalledTimes(2)
   })
 })

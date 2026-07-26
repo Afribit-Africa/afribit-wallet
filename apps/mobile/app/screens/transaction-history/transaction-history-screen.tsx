@@ -456,7 +456,7 @@ export const TransactionHistoryScreen: React.FC<TransactionHistoryScreenProps> =
 
   if (showLoadingSkeleton) {
     return (
-      <Screen>
+      <Screen style={styles.screen}>
         <WalletFilterDropdown
           selected={walletFilter}
           onSelectionChange={setWalletFilter}
@@ -501,7 +501,7 @@ export const TransactionHistoryScreen: React.FC<TransactionHistoryScreenProps> =
   }
 
   return (
-    <Screen>
+    <Screen style={styles.screen}>
       <WalletFilterDropdown
         selected={walletFilter}
         onSelectionChange={setWalletFilter}
@@ -535,10 +535,14 @@ export const TransactionHistoryScreen: React.FC<TransactionHistoryScreenProps> =
   )
 }
 
-const useStyles = makeStyles(({ colors }) => ({
+const useStyles = makeStyles(() => ({
+  screen: {
+    backgroundColor: "#0F0F11",
+  },
   skeletonWrapper: { flex: 1, alignSelf: "stretch" },
   noTransactionText: {
-    fontSize: 24,
+    fontSize: 16,
+    color: "#A8A39A",
   },
 
   noTransactionView: {
@@ -548,14 +552,17 @@ const useStyles = makeStyles(({ colors }) => ({
   },
 
   sectionHeaderContainer: {
-    backgroundColor: colors.white,
+    backgroundColor: "#0F0F11",
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: 18,
+    paddingTop: 24,
+    paddingBottom: 12,
+    paddingHorizontal: 24,
   },
 
   sectionHeaderText: {
-    color: colors.black,
-    fontSize: 18,
+    color: "#A8A39A",
+    fontSize: 13,
+    fontWeight: "600",
   },
 }))

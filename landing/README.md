@@ -18,6 +18,29 @@ npm run dev
 ```
 
 A working copy already exists at `%LOCALAPPDATA%\afribit-landing\app`.
+
+**Note on source-of-truth**: this `landing/` folder in the main repo is a committed snapshot. Day-to-day editing happens in the Google Drive copy (`g:\My Drive\workspaces\Afribit-Pay\landing-page`) because that's what stays open across sessions; builds run from the local copy above because Drive's filesystem can't handle `npm install`/`.next`. Sync all three before relying on any one of them — see `docs/INFRASTRUCTURE.md` §9 in the main wallet repo for the full note on this.
+
+## Deploying (live at pay.afribit.africa)
+
+`next.config.ts` sets `output: "export"` — `npm run build` produces a plain
+static `out/` folder (no Node server needed for the landing page itself).
+
+The production domain `pay.afribit.africa` is already used by the
+`afribit-daraja-callback` backend service (see the main wallet repo's
+`docs/BLOCKERS.md` and `docs/INFRASTRUCTURE.md`). Rather than standing up a
+second domain/tunnel, the landing page's static `out/` files are copied into
+that service's `public/landing/` folder and served by its Express app via
+`express.static`, mounted before the API router so it never shadows
+`/health` or `/daraja/callback/*`.
+
+To redeploy after a content change:
+```
+cd %LOCALAPPDATA%\afribit-landing\app
+npm run build
+robocopy %LOCALAPPDATA%\afribit-landing\app\out \\wsl.localhost\Ubuntu\home\primo\afribit-daraja-callback\public\landing /E /MIR
+```
+Then push `public/landing/` to the VM (`~/afribit-backend/services/daraja-callback/public/landing/`) and restart `afribit-daraja-callback.service`.
 After a rebuild, restart `next start` fully: a running server keeps a stale
 build manifest and serves 404 CSS.
 

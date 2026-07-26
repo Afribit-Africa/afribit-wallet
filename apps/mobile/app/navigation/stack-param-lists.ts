@@ -4,8 +4,7 @@ export const PhraseStep = { First: 1, Second: 2 } as const
 export type PhraseStep = (typeof PhraseStep)[keyof typeof PhraseStep]
 import { LNURLPaySuccessAction } from "lnurl-pay"
 
-import { IconNamesType } from "@app/components/atomic/galoy-icon"
-import { PhoneCodeChannelType, UserContact, WalletCurrency } from "@app/graphql/generated"
+import { PhoneCodeChannelType, WalletCurrency } from "@app/graphql/generated"
 import { EarnSectionType } from "@app/screens/earns-screen/sections"
 import { PhoneLoginInitiateType } from "@app/screens/phone-auth-screen"
 import {
@@ -50,6 +49,11 @@ export type RootStackParamList = {
     payment?: string
     username?: string
   }
+  sendMpesaSendMoney?: {
+    phoneNumber?: string
+  }
+  sendMpesaPaybill: undefined
+  sendMpesaTill: undefined
   sendConfirm: {
     paymentDestination: PaymentDestination
   }
@@ -134,50 +138,12 @@ export type RootStackParamList = {
   fullOnboardingFlow: undefined
   notificationHistory: undefined
   onboarding: NavigatorScreenParams<OnboardingStackParamList>
-  cardDashboardScreen: undefined
-  cardAddToMobileWalletScreen: {
-    lastFour: string
-    holderName: string
-  }
-  cardDetailsScreen: undefined
-  cardLimitsScreen: undefined
-  cardPersonalDetailsScreen: undefined
-  cardSettingsScreen: undefined
-  cardStatementsScreen: undefined
-  cardTransactionDetailsScreen: { transactionId: string }
-  cardStatusScreen: {
-    title: string
-    subtitle: string
-    buttonLabel: string
-    navigateTo: keyof RootStackParamList
-    iconName: IconNamesType
-    iconColor?: string
-    showCard?: boolean
-    showAddToWallet?: boolean
-    lastFour?: string
-    holderName?: string
-  }
-  cardShippingAddressScreen: undefined
-  cardCreatePinScreen: undefined
-  cardChangePinScreen: undefined
-  orderCardScreen: undefined
-  replaceCardScreen: { cardId: string }
   selectionScreen: {
     title: string
     options: Array<{ value: string; label: string }>
     selectedValue: string
     onSelect: (value: string) => void
   }
-  cardOnboardingIntroducingScreen: undefined
-  cardOnboardingDetailsScreen: undefined
-  cardOnboardingWelcomeScreen: undefined
-  cardOnboardingSubscribeScreen: undefined
-  cardOnboardingPaymentScreen: undefined
-  cardOnboardingLoadingScreen: undefined
-  cardOnboardingPersonalInfoScreen: undefined
-  cardOnboardingPreapprovedScreen: undefined
-  cardOnboardingProcessingScreen: undefined
-  cardOnboardingApprovedScreen: undefined
   selfCustodialBackupMethod: undefined
   selfCustodialCloudBackup: undefined
   selfCustodialBackupSecurityChecks: undefined
@@ -211,13 +177,6 @@ export type OnboardingStackParamList = {
   supportScreen?: { canGoBack?: boolean }
 }
 
-export type PeopleStackParamList = {
-  peopleHome: undefined
-  contactDetail: { contact: UserContact }
-  circlesDashboard: undefined
-  allContacts: undefined
-}
-
 export type PhoneValidationStackParamList = {
   Primary: undefined
   phoneLoginInitiate: {
@@ -246,10 +205,7 @@ export type PhoneValidationStackParamList = {
 
 export type PrimaryStackParamList = {
   Home: undefined
-  People: undefined
-  Map: undefined
   Earn: undefined
-  Web: undefined
 }
 
 export type NewAccountFlowParamsList = {

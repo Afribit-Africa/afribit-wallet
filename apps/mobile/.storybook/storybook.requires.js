@@ -85,8 +85,6 @@ const getStories = () => {
     "./app/screens/get-started-screen/device-account-fail-modal.stories.tsx": require("../app/screens/get-started-screen/device-account-fail-modal.stories.tsx"),
     "./app/screens/get-started-screen/get-started-screen.stories.tsx": require("../app/screens/get-started-screen/get-started-screen.stories.tsx"),
     "./app/screens/home-screen/home-screen.stories.tsx": require("../app/screens/home-screen/home-screen.stories.tsx"),
-    "./app/screens/people-screen/contacts/contacts-detail.stories.tsx": require("../app/screens/people-screen/contacts/contacts-detail.stories.tsx"),
-    "./app/screens/people-screen/people.stories.tsx": require("../app/screens/people-screen/people.stories.tsx"),
     "./app/screens/phone-auth-screen/phone-login-flow.stories.tsx": require("../app/screens/phone-auth-screen/phone-login-flow.stories.tsx"),
     "./app/screens/phone-auth-screen/phone-login-validation.stories.tsx": require("../app/screens/phone-auth-screen/phone-login-validation.stories.tsx"),
     "./app/screens/receive-bitcoin-screen/qr-view.stories.tsx": require("../app/screens/receive-bitcoin-screen/qr-view.stories.tsx"),

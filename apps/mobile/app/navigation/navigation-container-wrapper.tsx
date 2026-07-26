@@ -177,15 +177,7 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
         Primary: {
           screens: {
             Home: "home",
-            People: {
-              path: "people",
-              initialRouteName: "peopleHome",
-              screens: {
-                circlesDashboard: "circles",
-              },
-            },
             Earn: "earn",
-            Map: "map",
           },
         },
         priceHistory: "price",
@@ -201,21 +193,7 @@ export const NavigationContainerWrapper: React.FC<React.PropsWithChildren> = ({
         notificationSettingsScreen: "settings/notifications",
         emailRegistrationInitiate: "settings/email",
         settings: "settings",
-        cardDashboardScreen: "card",
-        cardDetailsScreen: "card/details",
-        cardLimitsScreen: "card/limits",
-        cardSettingsScreen: "card/settings",
-        cardStatementsScreen: "card/statements",
-        cardTransactionDetailsScreen: {
-          path: "card/transaction/:transactionId",
-        },
         accountMigrationEntry: "account-migration",
-        cardOnboardingWelcomeScreen: "card/onboarding",
-        cardOnboardingLoadingScreen: "card/onboarding/loading",
-        cardOnboardingPersonalInfoScreen: "card/onboarding/personal-info",
-        cardOnboardingProcessingScreen: "card/onboarding/processing",
-        cardOnboardingPreapprovedScreen: "card/onboarding/preapproved",
-        cardOnboardingApprovedScreen: "card/onboarding/approved",
         transactionDetail: {
           path: "transaction/:txid",
         },

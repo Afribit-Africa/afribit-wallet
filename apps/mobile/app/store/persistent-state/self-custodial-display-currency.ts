@@ -10,8 +10,8 @@ const resolveActiveSelfCustodialId = (state: PersistentState): string | null => 
 
 export const getSelfCustodialDisplayCurrency = (state: PersistentState): string => {
   const id = resolveActiveSelfCustodialId(state)
-  if (!id) return "USD"
-  return state.selfCustodialDisplayCurrencyByAccountId?.[id] ?? "USD"
+  if (!id) return "KES"
+  return state.selfCustodialDisplayCurrencyByAccountId?.[id] ?? "KES"
 }
 
 export const withSelfCustodialDisplayCurrency = (

@@ -3,7 +3,7 @@ import { View } from "react-native"
 
 import { makeStyles } from "@rn-vui/themed"
 
-import { InfoRow } from "@app/components/card-screen/info-row"
+import { InfoRow } from "@app/components/atomic/info-row"
 
 type BalancePairCardProps = {
   bitcoinLabel: string

@@ -27,7 +27,7 @@ import { TrialAccountLimitsModal } from "@app/components/upgrade-account-modal"
 import SlideUpHandle from "@app/components/slide-up-handle"
 import { Screen } from "@app/components/screen"
 import AfribitMonogramWhite from "@app/assets/logo/afribit/afribit-monogram-white.svg"
-import AfribitMonogramBlack from "@app/assets/logo/afribit/afribit-monogram-black.svg"
+import AfribitMonogramTwoTone from "@app/assets/logo/afribit/afribit-monogram.svg"
 import BitikaIcon from "@app/assets/logo/bitika/bitika-icon.svg"
 import {
   UnseenTxAmountBadge,
@@ -213,7 +213,7 @@ export const HomeScreen: React.FC = () => {
   const {
     theme: { colors, mode },
   } = useTheme()
-  const AfribitMonogram = mode === "dark" ? AfribitMonogramWhite : AfribitMonogramBlack
+  const AfribitMonogram = mode === "dark" ? AfribitMonogramWhite : AfribitMonogramTwoTone
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const { balanceLimitToTriggerUpgradeModal, upgradeModalCooldownDays } =
     useRemoteConfig()
@@ -752,8 +752,14 @@ export const HomeScreen: React.FC = () => {
               </Text>
               {showBalanceInBtcMode && <Text style={styles.balanceUnit}> sats</Text>}
             </View>
-            {fiatEquivalent && (
-              <Text style={styles.fiatEquivalent}>≈ {fiatEquivalent}</Text>
+            {showBalanceInBtcMode ? (
+              fiatEquivalent && (
+                <Text style={styles.fiatEquivalent}>≈ {fiatEquivalent}</Text>
+              )
+            ) : (
+              <Text style={styles.fiatEquivalent}>
+                ≈ {satsBalance.toLocaleString()} sats
+              </Text>
             )}
           </View>
         </Pressable>
@@ -800,6 +806,15 @@ export const HomeScreen: React.FC = () => {
         >
           <BitikaIcon width={16} height={16} />
           <Text style={styles.buyButtonText}>Buy bitcoin with M-Pesa</Text>
+        </Pressable>
+
+        {/* ─── CONVERT BTC USD ─── */}
+        <Pressable
+          style={styles.convertButton}
+          onPress={() => navigation.navigate("conversionDetails")}
+        >
+          <GaloyIcon name="transfer" size={16} color={colors.primary} />
+          <Text style={styles.convertButtonText}>Convert BTC {"↔"} USD</Text>
         </Pressable>
 
         {/* ─── ACTIVITY SECTION ─── */}
@@ -1078,6 +1093,24 @@ const useStyles = makeStyles(({ colors }) => ({
   buyButtonText: {
     fontSize: 15,
     fontWeight: "700",
+    color: colors.black,
+  },
+
+  // ── CONVERT BUTTON ──
+  convertButton: {
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: colors.backdropWhite,
+    borderWidth: 1,
+    borderColor: colors.backdropWhiter,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  convertButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
     color: colors.black,
   },
 

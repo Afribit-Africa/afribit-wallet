@@ -5,7 +5,6 @@ import { useNavigation } from "@react-navigation/native"
 import { type NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { makeStyles, Overlay, Text, useTheme } from "@rn-vui/themed"
 
-import { InfoCard } from "@app/components/card-screen"
 import { useAccountRegistry } from "@app/hooks/use-account-registry"
 import { useI18nContext } from "@app/i18n/i18n-react"
 import { type RootStackParamList } from "@app/navigation/stack-param-lists"
@@ -61,11 +60,16 @@ export const DeleteAccount: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <InfoCard
-        title={LL.SelfCustodialDelete.dangerZoneImportantTitle()}
-        bulletItems={bulletItems}
-        bulletSpacing={4}
-      />
+      <View style={styles.infoCard}>
+        <Text type="p1" style={styles.infoCardTitle}>
+          {LL.SelfCustodialDelete.dangerZoneImportantTitle()}
+        </Text>
+        {bulletItems.map((item, idx) => (
+          <Text key={idx} type="p2" color={colors.grey3}>
+            {"\u2022"} {item}
+          </Text>
+        ))}
+      </View>
 
       <SettingsButton
         title={LL.SelfCustodialDelete.dangerZoneDeleteButton()}
@@ -99,6 +103,16 @@ const useStyles = makeStyles(() => ({
     flexDirection: "column",
     rowGap: 18,
     marginTop: 8,
+  },
+  infoCard: {
+    backgroundColor: "#1d1d1d",
+    borderRadius: 10,
+    padding: 16,
+    gap: 4,
+  },
+  infoCardTitle: {
+    fontWeight: "700",
+    marginBottom: 4,
   },
   overlayStyle: {
     backgroundColor: "transparent",

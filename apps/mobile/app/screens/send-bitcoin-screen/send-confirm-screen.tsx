@@ -142,6 +142,7 @@ const SendConfirmScreen: React.FC<Props> = ({ route }) => {
     zeroDisplayAmount,
     formatDisplayAndWalletAmount,
     getSecondaryAmountIfCurrencyIsDifferent,
+    fractionDigits: displayCurrencyFractionDigits,
   } = useDisplayCurrency()
   const { LL } = useI18nContext()
   const { copyToClipboard } = useClipboard()
@@ -190,7 +191,9 @@ const SendConfirmScreen: React.FC<Props> = ({ route }) => {
   const translateSdkError = useTranslateSdkError()
   const saveLnAddressContact = useSaveLnAddressContact()
 
+  type AmountUnit = "KES" | "sats"
   const [rawAmount, setRawAmount] = useState("")
+  const [amountUnit, setAmountUnit] = useState<AmountUnit>("KES")
 
   useEffect(() => {
     if (!_convertMoneyAmount) return
@@ -574,16 +577,30 @@ const SendConfirmScreen: React.FC<Props> = ({ route }) => {
   const isFixedAmount = !paymentDetail.canSetAmount
   const satsDisplay = paymentDetail.canSetAmount
     ? (rawAmount ? rawAmount : "0")
-    : satAmount.replace(/[^0-9,]/g, "") // strip non-numeric for large display
+    : satAmount.replace(/[^0-9,]/g, "")
   const finalSatsDisplay = isFixedAmount
     ? formatMoneyAmount({ moneyAmount: paymentDetail.settlementAmount })
     : rawAmount || "0"
 
+  const kesPrimary = amountUnit === "KES" && !isFixedAmount
+
   const handleKeypadPress = (key: SendKeypadKey) => {
-    if (key === "backspace") {
-      setRawAmount((prev) => prev.slice(0, -1))
-    } else {
-      setRawAmount((prev) => prev + key)
+    const next = key === "backspace" ? rawAmount.slice(0, -1) : rawAmount + key
+    setRawAmount(next)
+    if (next && setAmount) {
+      const numeric = Number(next) || 0
+      if (amountUnit === "KES") {
+        // DisplayCurrency amounts are stored in minor units (e.g. cents) -
+        // `numeric` here is the major-unit figure the user typed (e.g. "500"
+        // meaning 500 KES), so it must be scaled by 10^fractionDigits before
+        // being wrapped in a MoneyAmount, matching amountInMajorUnitOrSatsToMoneyAmount's
+        // internal DisplayCurrency case in use-display-currency.ts.
+        const minorUnits = Math.round(numeric * 10 ** displayCurrencyFractionDigits)
+        setAmount({ amount: minorUnits, currency: DisplayCurrency, currencyCode: DisplayCurrency })
+      } else {
+        // Sats are already the base/minor unit for BTC - no scaling needed.
+        setAmount({ amount: numeric, currency: WalletCurrency.Btc, currencyCode: "BTC" })
+      }
     }
   }
 
@@ -623,15 +640,32 @@ const SendConfirmScreen: React.FC<Props> = ({ route }) => {
                 {hideAmount ? HIDDEN_AMOUNT_PLACEHOLDER : `≈ ${currencyAmount}`}
               </Text>
             </>
-          ) : (
-            <>
-              <View style={styles.amountRow}>
-                <Text style={styles.amountValue}>{satAmount}</Text>
-                <Text style={styles.amountUnit}>sats</Text>
-              </View>
-              <Text style={styles.amountSecondary}>≈ {currencyAmount}</Text>
-              <Text style={styles.editableHint}>Enter amount to pay</Text>
-            </>
+) : (
+              <>
+                <View style={styles.amountRow}>
+                  <Text style={styles.amountValue}>
+                    {kesPrimary ? `KSh ${rawAmount || "0"}` : satAmount}
+                  </Text>
+                  {!kesPrimary && <Text style={styles.amountUnit}>sats</Text>}
+                </View>
+                <Text style={styles.amountSecondary}>
+                  ≈ {kesPrimary ? satAmount : currencyAmount}
+                </Text>
+                <View style={styles.toggleRow}>
+                  <Pressable
+                    style={[styles.toggleSeg, kesPrimary && styles.toggleSegActive]}
+                    onPress={() => setAmountUnit("KES")}
+                  >
+                    <Text style={[styles.toggleText, kesPrimary && styles.toggleTextActive]}>KES</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.toggleSeg, !kesPrimary && styles.toggleSegActive]}
+                    onPress={() => setAmountUnit("sats")}
+                  >
+                    <Text style={[styles.toggleText, !kesPrimary && styles.toggleTextActive]}>sats</Text>
+                  </Pressable>
+                </View>
+              </>
           )}
         </View>
 
@@ -735,7 +769,17 @@ const SendConfirmScreen: React.FC<Props> = ({ route }) => {
         onBackdropPress={toggleWalletModal}
       >
         <View>
-          {wallets?.map((wallet) => (
+          {wallets
+            ?.filter(
+              // Onchain sends have no USD-conversion path in the self-custodial
+              // payment-details layer yet (see onchain.ts) - the raw USD cent
+              // amount would be sent to the SDK as if it were satoshis. Hide USD
+              // here rather than let that silently happen.
+              (wallet) =>
+                wallet.walletCurrency !== WalletCurrency.Usd ||
+                paymentDetail.paymentType !== PaymentType.Onchain,
+            )
+            .map((wallet) => (
             <Pressable
               key={wallet.id}
               {...testProps(wallet.walletCurrency)}
@@ -856,6 +900,31 @@ const useStyles = makeStyles(({ colors }, { bottom }: { bottom: number }) => ({
     color: colors.primary,
     marginTop: 4,
     marginBottom: 20,
+  },
+  toggleRow: {
+    flexDirection: "row",
+    alignSelf: "center",
+    backgroundColor: colors.grey5,
+    borderRadius: 10,
+    padding: 3,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  toggleSeg: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  toggleSegActive: {
+    backgroundColor: colors.primary,
+  },
+  toggleText: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: colors.grey3,
+  },
+  toggleTextActive: {
+    color: "#FFFFFF",
   },
   quickAmounts: {
     flexDirection: "row",

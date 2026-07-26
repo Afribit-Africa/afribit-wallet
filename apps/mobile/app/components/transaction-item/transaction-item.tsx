@@ -1,8 +1,8 @@
 import React from "react"
-import { View } from "react-native"
+import { View, Pressable } from "react-native"
 import Animated, { useSharedValue, useAnimatedStyle } from "react-native-reanimated"
 import { useIsFocused } from "@react-navigation/native"
-import { Text, makeStyles, ListItem } from "@rn-vui/themed"
+import { Text, makeStyles } from "@rn-vui/themed"
 import { useFragment } from "@apollo/client"
 
 import {
@@ -22,7 +22,6 @@ import { IconTransaction } from "../icon-transactions"
 import { TransactionDate } from "../transaction-date"
 import { DeepPartialObject } from "./index.types"
 
-// This should extend the Transaction directly from the cache
 export const useDescriptionDisplay = ({
   tx,
   bankName,
@@ -32,27 +31,21 @@ export const useDescriptionDisplay = ({
 }) => {
   const { LL } = useI18nContext()
 
-  if (!tx) {
-    return ""
-  }
+  if (!tx) return ""
 
   const { memo, direction, settlementVia } = tx
-  if (memo) {
-    return memo
-  }
+  if (memo) return memo
 
   const isReceive = direction === "RECEIVE"
 
   switch (settlementVia?.__typename) {
     case "SettlementViaOnChain":
-      return "OnChain Payment"
+      return "On-chain"
     case "SettlementViaLn":
-      return "Invoice"
+      return "Lightning"
     case "SettlementViaIntraLedger":
       return isReceive
-        ? `${LL.common.from()} ${
-            settlementVia.counterPartyUsername || bankName + " User"
-          }`
+        ? `${LL.common.from()} ${settlementVia.counterPartyUsername || bankName + " User"}`
         : `${LL.common.to()} ${settlementVia.counterPartyUsername || bankName + " User"}`
   }
 }
@@ -62,201 +55,155 @@ type Props = {
   subtitle?: boolean
   isFirst?: boolean
   isLast?: boolean
-  isOnHomeScreen?: boolean
-  testId?: string
   highlight?: boolean
   onPress?: () => void
+  testId?: string
 }
+
+const ROW_BG = "#0F0F11"
 
 const TransactionItem: React.FC<Props> = ({
   txid,
   subtitle = false,
   isFirst = false,
   isLast = false,
-  isOnHomeScreen = false,
-  testId = "transaction-item",
   highlight = false,
   onPress,
+  testId = "transaction-item",
 }) => {
-  const styles = useStyles({
-    isFirst,
-    isLast,
-    isOnHomeScreen,
-    highlight,
-  })
+  const styles = useStyles({ highlight })
 
   const { data: tx } = useFragment<TransactionFragment>({
     fragment: TransactionFragmentDoc,
     fragmentName: "Transaction",
-    from: {
-      __typename: "Transaction",
-      id: txid,
-    },
+    from: { __typename: "Transaction", id: txid },
   })
 
-  const {
-    appConfig: { galoyInstance },
-  } = useAppConfig()
+  const { appConfig: { galoyInstance } } = useAppConfig()
   const { formatMoneyAmount, formatCurrency } = useDisplayCurrency()
-
   const { hideAmount } = useHideAmount()
 
-  const description = useDescriptionDisplay({
-    tx,
-    bankName: galoyInstance.name,
-  })
+  const description = useDescriptionDisplay({ tx, bankName: galoyInstance.name })
 
   const isFocused = useIsFocused()
   const scale = useSharedValue(1)
-  useBounceInAnimation({
-    isFocused,
-    visible: highlight,
-    scale,
-    delay: 300,
-    duration: 120,
-  })
-  const animatedStyle = useAnimatedStyle(
-    () => ({ transform: [{ scale: scale.value }] }),
-    [scale],
-  )
+  useBounceInAnimation({ isFocused, visible: highlight, scale, delay: 300, duration: 120 })
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }), [scale])
 
-  if (!tx || Object.keys(tx).length === 0) {
-    return null
-  }
-
-  if (
-    !tx.settlementCurrency ||
-    !tx.settlementDisplayAmount ||
-    !tx.settlementDisplayCurrency ||
-    !tx.id ||
-    !tx.createdAt ||
-    !tx.status
-  ) {
-    return null
-  }
+  if (!tx || Object.keys(tx).length === 0) return null
+  if (!tx.settlementCurrency || !tx.settlementDisplayAmount || !tx.settlementDisplayCurrency || !tx.id || !tx.createdAt || !tx.status) return null
 
   const isReceive = tx.direction === "RECEIVE"
   const isPending = tx.status === "PENDING"
-
-  const amountStyle = isPending
-    ? styles.pending
-    : isReceive
-      ? styles.receive
-      : styles.send
-
   const walletCurrency = tx.settlementCurrency as WalletCurrency
-
-  const formattedSettlementAmount = formatMoneyAmount({
-    moneyAmount: toWalletAmount({
-      amount: tx.settlementAmount,
-      currency: tx.settlementCurrency,
-    }),
-  })
 
   const formattedDisplayAmount = formatCurrency({
     amountInMajorUnits: tx.settlementDisplayAmount,
     currency: tx.settlementDisplayCurrency,
   })
 
-  const formattedSecondaryAmount =
-    tx.settlementDisplayCurrency === tx.settlementCurrency
-      ? undefined
-      : formattedSettlementAmount
+  const prefix = isReceive ? "+" : "−"
 
   return (
     <Animated.View style={animatedStyle}>
-      <ListItem
+      <Pressable
         {...testProps(testId)}
-        containerStyle={styles.container}
+        style={styles.row}
         onPress={onPress}
       >
-        <IconTransaction
-          onChain={tx.settlementVia?.__typename === "SettlementViaOnChain"}
-          isReceive={isReceive}
-          pending={isPending}
-          walletCurrency={walletCurrency}
-        />
-        <ListItem.Content {...testProps("list-item-content")}>
-          <ListItem.Title
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            style={styles.title}
-            {...testProps("tx-description")}
-          >
+        <View style={styles.iconCircle}>
+          <IconTransaction
+            onChain={tx.settlementVia?.__typename === "SettlementViaOnChain"}
+            isReceive={isReceive}
+            pending={isPending}
+            walletCurrency={walletCurrency}
+          />
+        </View>
+        <View style={styles.textBlock}>
+          <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
             {description}
-          </ListItem.Title>
-          <ListItem.Subtitle style={styles.subtitle}>
-            {subtitle ? (
-              <TransactionDate
-                createdAt={tx.createdAt}
-                status={tx.status}
-                includeTime={false}
-              />
-            ) : undefined}
-          </ListItem.Subtitle>
-        </ListItem.Content>
-
+          </Text>
+          {subtitle && (
+            <Text style={styles.subtitle} numberOfLines={1}>
+              <TransactionDate createdAt={tx.createdAt} status={tx.status} includeTime={false} />
+              {" · "}
+              {tx.settlementVia?.__typename === "SettlementViaOnChain"
+                ? "On-chain"
+                : tx.settlementVia?.__typename === "SettlementViaLn"
+                  ? "Lightning"
+                  : tx.settlementVia?.__typename === "SettlementViaIntraLedger"
+                    ? "Afribit Pay"
+                    : "Bitcoin"}
+            </Text>
+          )}
+        </View>
         {hideAmount ? (
-          <Text>****</Text>
+          <Text style={styles.amountSend}>****</Text>
         ) : (
-          <View>
-            <Text style={amountStyle}>{formattedDisplayAmount}</Text>
-            {formattedSecondaryAmount && (
-              <Text style={amountStyle}>{formattedSecondaryAmount}</Text>
-            )}
-          </View>
+          <Text style={isPending ? styles.amountPending : isReceive ? styles.amountReceive : styles.amountSend}>
+            {prefix}
+            {formattedDisplayAmount}
+          </Text>
         )}
-      </ListItem>
+      </Pressable>
     </Animated.View>
   )
 }
 
 export const MemoizedTransactionItem = React.memo(TransactionItem)
 
-type UseStyleProps = {
-  isFirst?: boolean
-  isLast?: boolean
-  isOnHomeScreen?: boolean
-  highlight?: boolean
-}
+type StyleProps = { highlight?: boolean }
 
-const useStyles = makeStyles(({ colors }, props: UseStyleProps) => ({
-  container: {
-    paddingVertical: 9,
-    borderColor: colors.grey4,
-    overflow: "hidden",
-    backgroundColor: props.highlight ? colors.grey4 : colors.grey5,
-    borderTopWidth: (props.isFirst && props.isOnHomeScreen) || !props.isFirst ? 1 : 0,
-    borderBottomLeftRadius: props.isLast && props.isOnHomeScreen ? 12 : 0,
-    borderBottomRightRadius: props.isLast && props.isOnHomeScreen ? 12 : 0,
+const useStyles = makeStyles((_colors, props: StyleProps) => ({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 13,
+    paddingHorizontal: 24,
+    backgroundColor: props.highlight ? "rgba(201,121,50,0.12)" : ROW_BG,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "rgba(255,255,255,0.06)",
   },
-  hiddenBalanceContainer: {
-    fontSize: 16,
-    color: colors.grey0,
+  iconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
   },
-  pending: {
-    color: colors.grey1,
-    textAlign: "right",
-    flexWrap: "wrap",
-  },
-  receive: {
-    color: colors._green,
-    textAlign: "right",
-    flexWrap: "wrap",
-  },
-  send: {
-    color: colors.grey0,
-    textAlign: "right",
-    flexWrap: "wrap",
+  textBlock: {
+    flex: 1,
+    marginRight: 12,
   },
   title: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: "400",
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#F7F5F2",
   },
   subtitle: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#A8A39A",
+    marginTop: 2,
+  },
+  amountReceive: {
     fontSize: 14,
-    lineHeight: 20,
-    fontWeight: "400",
+    fontWeight: "700",
+    color: "#22C55E",
+    textAlign: "right",
+  },
+  amountSend: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#F7F5F2",
+    textAlign: "right",
+  },
+  amountPending: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#A8A39A",
+    textAlign: "right",
   },
 }))

@@ -3,7 +3,7 @@ import { View } from "react-native"
 
 import { makeStyles } from "@rn-vui/themed"
 
-import { InfoRow } from "@app/components/card-screen/info-row"
+import { InfoRow } from "@app/components/atomic/info-row"
 import { useDisplayCurrency } from "@app/hooks/use-display-currency"
 import { usePriceConversion } from "@app/hooks/use-price-conversion"
 import { useI18nContext } from "@app/i18n/i18n-react"

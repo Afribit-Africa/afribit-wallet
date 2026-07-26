@@ -3,7 +3,7 @@
  *
  * ## Endpoints
  * - OAuth:         GET  /oauth/v1/generate?grant_type=client_credentials
- * - B2C (phone):  POST /mpesa/b2c/v1/paymentrequest
+ * - B2C (phone):  POST /mpesa/b2c/v3/paymentrequest
  * - B2B (till/paybill): POST /mpesa/b2b/v1/paymentrequest
  *
  * ## CommandID values
@@ -11,18 +11,16 @@
  * |---------------|--------------------|------------------------|
  * | PhoneNumber    | BusinessPayment    | ✅ confirmed           |
  * | PayBill        | BusinessPayBill    | ✅ confirmed           |
- * | TillNumber     | BusinessBuyGoods   | ⚠️ UNCONFIRMED — see summary |
+ * | TillNumber     | BusinessBuyGoods   | ✅ confirmed           |
  *
- * ## Callback gap (CRITICAL — see docs/DARAJA_INTEGRATION.md § Callbacks)
+ * ## Callback receiver (see docs/BLOCKERS.md item 2 for the deployment story)
  * Both B2C and B2B are asynchronous. The initial POST returns an acknowledgement;
  * the real result (success/failure) arrives later at the `ResultURL`/`QueueTimeOutURL`
- * as an HTTPS POST from Safaricom. This app is a **pure mobile client with no
- * backend server** — there is currently no HTTPS endpoint to receive these callbacks.
- *
- * Until a callback receiver exists (even a minimal serverless function),
- * `getPayoutStatus()` cannot return the true result and will always report
- * "processing". This is an architectural gap, not an implementation gap —
- * documented here so it does not get lost.
+ * as an HTTPS POST from Safaricom. `afribit-daraja-callback` (deployed to the
+ * production backend VM) now receives and persists these — see `resultUrl`/
+ * `queueTimeoutUrl` above. `getPayoutStatus()` below checks the local
+ * in-memory cache first, then falls back to querying that service directly
+ * (see its own doc comment for the response-mapping details).
  */
 
 import type {
@@ -89,26 +87,21 @@ type DarajaEndpointConfig = {
 }
 
 const buildB2CConfig = (destination: string): DarajaEndpointConfig => ({
-  path: "/mpesa/b2c/v1/paymentrequest",
+  path: "/mpesa/b2c/v3/paymentrequest",
   commandId: "BusinessPayment",
   partyB: destination,
 })
 
 /**
  * Maps a destination type to the correct Daraja endpoint + payload shape.
- *
- * ## TillNumber CommandID
- * `"BusinessBuyGoods"` is the likely value for Buy Goods tills per community
- * implementations, but this has NOT been confirmed from Safaricom's current
- * API reference. The Daraja portal (developer.safaricom.co.ke) issues an API
- * reference PDF once an app is registered — the correct CommandID for tills
- * MUST be verified from that document before tills can work in production.
+ * TillNumber uses `BusinessBuyGoods` CommandID per Safaricom's B2B API docs.
  */
 const buildB2BConfig = (
   destination: string,
   destinationType: "TillNumber" | "PayBill",
+  accountReference?: string,
 ): DarajaEndpointConfig => {
-  const accountRef = `PAYOUT-${Date.now()}`
+  const accountRef = accountReference || `PAYOUT-${Date.now()}`
 
   if (destinationType === "PayBill") {
     return {
@@ -119,7 +112,7 @@ const buildB2BConfig = (
     }
   }
 
-  // TillNumber (Buy Goods) — CommandID unconfirmed (see summary).
+  // TillNumber (Buy Goods)
   return {
     path: "/mpesa/b2b/v1/paymentrequest",
     commandId: "BusinessBuyGoods",
@@ -131,13 +124,14 @@ const buildB2BConfig = (
 export const buildDarajaEndpointConfig = (
   destinationType: PayoutDestinationType,
   destination: string,
+  accountReference?: string,
 ): DarajaEndpointConfig => {
   switch (destinationType) {
     case "PhoneNumber":
       return buildB2CConfig(destination)
     case "TillNumber":
     case "PayBill":
-      return buildB2BConfig(destination, destinationType)
+      return buildB2BConfig(destination, destinationType, accountReference)
   }
 }
 
@@ -145,8 +139,8 @@ export const buildDarajaEndpointConfig = (
 // Request body construction
 // ---------------------------------------------------------------------------
 
-type B2CPayload = {
-  InitiatorName: string
+type DarajaBasePayload = {
+  OriginatorConversationID: string
   SecurityCredential: string
   CommandID: string
   Amount: string
@@ -155,10 +149,17 @@ type B2CPayload = {
   Remarks: string
   QueueTimeOutURL: string
   ResultURL: string
-  Occasion: string
 }
 
-type B2BPayload = B2CPayload & {
+type B2CPayload = DarajaBasePayload & {
+  InitiatorName: string
+  Occassion: string
+}
+
+type B2BPayload = DarajaBasePayload & {
+  Initiator: string
+  SenderIdentifierType: string
+  RecieverIdentifierType: string
   AccountReference?: string
 }
 
@@ -170,6 +171,8 @@ export type DarajaRequestBodyOptions = {
   securityCredential: string
   resultUrl: string
   timeoutUrl: string
+  originatorConversationId: string
+  isB2B: boolean
 }
 
 export const buildDarajaRequestBody = (
@@ -183,9 +186,12 @@ export const buildDarajaRequestBody = (
     securityCredential,
     resultUrl,
     timeoutUrl,
+    originatorConversationId,
+    isB2B,
   } = opts
-  const base: B2CPayload = {
-    InitiatorName: initiatorName,
+
+  const base: DarajaBasePayload = {
+    OriginatorConversationID: originatorConversationId,
     SecurityCredential: securityCredential,
     CommandID: config.commandId,
     Amount: String(amountKes),
@@ -194,14 +200,25 @@ export const buildDarajaRequestBody = (
     Remarks: "Afribit Pay off-ramp",
     QueueTimeOutURL: timeoutUrl,
     ResultURL: resultUrl,
-    Occasion: "Afribit",
   }
 
-  if (config.extraFields) {
-    return { ...base, ...config.extraFields }
+  if (isB2B) {
+    const b2b: B2BPayload = {
+      ...base,
+      Initiator: initiatorName,
+      SenderIdentifierType: "4",
+      RecieverIdentifierType: "4",
+      ...(config.extraFields || {}),
+    }
+    return b2b
   }
 
-  return base
+  const b2c: B2CPayload = {
+    ...base,
+    InitiatorName: initiatorName,
+    Occassion: "Afribit",
+  }
+  return b2c
 }
 
 // ---------------------------------------------------------------------------
@@ -237,10 +254,19 @@ export type DarajaPayoutProviderOptions = {
   /** OAuth consumer secret from developer.safaricom.co.ke. */
   readonly consumerSecret: string
 
+  /** Pre-computed SecurityCredential (RSA-encrypted initiator password) from
+   *  Safaricom's developer portal. When set, this value is sent verbatim and
+   *  `certificatePem` / local encryption is skipped entirely.
+   *  Sandbox: developer.safaricom.co.ke → Test Credentials → SecurityCredential.
+   *  Production: issued during production API approval. */
+  readonly securityCredential?: string
+
   /** X.509 certificate PEM for SecurityCredential encryption.
+   *  Only used when `securityCredential` is not supplied. Optional — leave
+   *  unset when using a pre-computed SecurityCredential from the portal.
    *  Sandbox cert: https://developer.safaricom.co.ke → Test Certificates page.
    *  Production cert: different — issued during production API approval. */
-  readonly certificatePem: string
+  readonly certificatePem?: string
 
   /** M-Pesa shortcode. Defaults to the sandbox shortcode 174379. */
   readonly shortcode?: string
@@ -249,22 +275,21 @@ export type DarajaPayoutProviderOptions = {
    *  this is typically `"apitest"` or the Consumer Key prefix. */
   readonly initiatorName?: string
 
-  /** Initiator password (plaintext — encrypted with the cert before sending). */
-  readonly initiatorPassword: string
+  /** Initiator password (plaintext — encrypted with the cert before sending).
+   *  Required only when `securityCredential` is not supplied. */
+  readonly initiatorPassword?: string
 
   /** HTTPS endpoint to receive Safaricom's async B2C/B2B result callback.
-   *  **This endpoint does not exist yet** — the app is pure mobile client with
-   *  no backend. A minimal serverless function must be deployed before the
-   *  callback flow can work end-to-end. Passing a placeholder URL here lets the
-   *  provider submit payouts; results will remain "processing" until the
-   *  callback receiver is live. */
+   *  Live as of 2026-07-26 — see `afribit-daraja-callback` (deployed to the
+   *  production backend VM, reachable via a Pinggy Pro tunnel). */
   readonly resultUrl?: string
 
-  /** Timeout callback URL. Same architectural gap as `resultUrl`. */
+  /** Timeout callback URL — separate endpoint on the same callback receiver. */
   readonly queueTimeoutUrl?: string
 }
 
-const DEFAULT_RESULT_URL = "https://placeholder.afribit.africa/daraja/callback"
+const DEFAULT_RESULT_URL = "https://pay.afribit.africa/daraja/callback/result"
+const DEFAULT_TIMEOUT_URL = "https://pay.afribit.africa/daraja/callback/timeout"
 
 export const createDarajaPayoutProvider = (
   opts: DarajaPayoutProviderOptions,
@@ -273,13 +298,14 @@ export const createDarajaPayoutProvider = (
     btcToKesRate,
     baseUrl = DARAJA_SANDBOX_BASE_URL,
     certificatePem,
+    securityCredential: precomputedCredential,
     consumerKey,
     consumerSecret,
     shortcode = "174379",
     initiatorName = "apitest",
     initiatorPassword,
     resultUrl = DEFAULT_RESULT_URL,
-    queueTimeoutUrl = DEFAULT_RESULT_URL,
+    queueTimeoutUrl = DEFAULT_TIMEOUT_URL,
   } = opts
 
   const oauth: OAuthClient = createOAuthClient({
@@ -299,7 +325,7 @@ export const createDarajaPayoutProvider = (
     },
 
     async executePayout(req: PayoutRequest): Promise<PayoutResult> {
-      const { quote, destinationType, destination, idempotencyKey } = req
+      const { quote, destinationType, destination, idempotencyKey, accountReference } = req
 
       const existing = storedResults.get(idempotencyKey)
       if (existing) {
@@ -337,12 +363,17 @@ export const createDarajaPayoutProvider = (
         }
       }
 
-      const endpointConfig = buildDarajaEndpointConfig(destinationType, digitsOnly)
+      const endpointConfig = buildDarajaEndpointConfig(destinationType, digitsOnly, accountReference)
 
-      const securityCredential = encryptSecurityCredential(
-        certificatePem,
-        initiatorPassword,
-      )
+      const securityCredential = precomputedCredential
+        ? precomputedCredential
+        : certificatePem && initiatorPassword
+          ? encryptSecurityCredential(certificatePem, initiatorPassword)
+          : (() => {
+              throw new Error(
+                "No SecurityCredential available — provide either a pre-computed SecurityCredential or both a certificate PEM and initiator password",
+              )
+            })()
 
       const body = buildDarajaRequestBody({
         config: endpointConfig,
@@ -352,6 +383,8 @@ export const createDarajaPayoutProvider = (
         securityCredential,
         resultUrl,
         timeoutUrl: queueTimeoutUrl,
+        originatorConversationId: idempotencyKey,
+        isB2B: destinationType !== "PhoneNumber",
       })
 
       try {
@@ -460,17 +493,88 @@ export const createDarajaPayoutProvider = (
         }
       }
 
-      /**
-       * Daraja does not offer a customer-facing status-check endpoint —
-       * results arrive exclusively via the asynchronous ResultURL callback.
-       * Without a live callback receiver, unknown payout IDs will always
-       * show "processing" with this placeholder message.
-       */
+      const statusUrl = `${new URL(resultUrl).origin}/daraja/callback/status/${payoutId}`
+
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+        const response = await fetch(statusUrl, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+        })
+
+        clearTimeout(timeoutId)
+
+        if (response.status === 404) {
+          return {
+            payoutId,
+            status: "processing",
+            message: "Awaiting callback from Safaricom",
+            destination: "",
+            kesAmount: 0,
+            updatedAt: new Date().toISOString(),
+          }
+        }
+
+        if (response.ok) {
+          const record = (await response.json()) as {
+            originatorConversationID?: string
+            isSuccess?: boolean
+            resultDesc?: string
+            resultParameters?: Record<string, unknown>
+            updatedAt?: string
+            createdAt?: string
+          }
+
+          const isSuccess = record.isSuccess === true
+
+          // amount was part of the original quote and is NOT stored by the
+          // callback receiver (Safaricom's callback doesn't include it in a
+          // single predictable field across B2C/B2B). B2C sends
+          // TransactionAmount in resultParameters; B2B sends Amount. Try
+          // both, fall back to 0 when neither is present.
+          const kesAmount = (() => {
+            const params = record.resultParameters ?? {}
+            const raw = params.TransactionAmount ?? params.Amount
+            const num = typeof raw === "number" ? raw : parseInt(String(raw), 10)
+            return Number.isFinite(num) ? num : 0
+          })()
+
+          // destination is not returned by the callback receiver (it was
+          // part of the original payout request, not the callback payload
+          // that Safaricom sends). Returning "" here is a deliberate gap:
+          // status checks via this path cannot reconstruct the destination
+          // from callback data alone. The local in-memory cache (populated
+          // by executePayout) has it for the same session.
+          const destination = ""
+
+          return {
+            payoutId,
+            status: isSuccess ? "fulfilled" : "failed",
+            message: record.resultDesc ?? (isSuccess ? "M-Pesa payout completed" : "M-Pesa payout failed"),
+            destination,
+            kesAmount,
+            updatedAt:
+              record.updatedAt ?? record.createdAt ?? new Date().toISOString(),
+          }
+        }
+
+        console.warn(
+          `Daraja callback status endpoint returned unexpected status ${response.status} for payout ${payoutId}`,
+        )
+      } catch (err) {
+        console.warn(
+          `Failed to check Daraja callback status for payout ${payoutId}:`,
+          err instanceof Error ? err.message : String(err),
+        )
+      }
+
       return {
         payoutId,
         status: "processing",
-        message:
-          "Payout status unknown — Daraja results are delivered via callback URL which requires a backend endpoint not yet deployed",
+        message: "Awaiting callback from Safaricom",
         destination: "",
         kesAmount: 0,
         updatedAt: new Date().toISOString(),

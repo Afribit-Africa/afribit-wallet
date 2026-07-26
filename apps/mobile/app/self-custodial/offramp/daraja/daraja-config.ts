@@ -46,3 +46,41 @@ export const requireDarajaConsumerSecret = (): string => {
   }
   return secret
 }
+
+export const requireDarajaInitiatorPassword = (): string => {
+  const password = Config.DARAJA_INITIATOR_PASSWORD
+  if (!password) {
+    throw new Error("DARAJA_INITIATOR_PASSWORD is not configured for this build")
+  }
+  return password
+}
+
+export const requireDarajaCertificatePem = (): string => {
+  const pem = Config.DARAJA_CERTIFICATE_PEM
+  if (!pem) {
+    throw new Error("DARAJA_CERTIFICATE_PEM is not configured for this build")
+  }
+  return pem
+}
+
+export const requireDarajaTreasuryLnAddress = (): string => {
+  const address = Config.DARAJA_TREASURY_LN_ADDRESS
+  if (!address) {
+    throw new Error("DARAJA_TREASURY_LN_ADDRESS is not configured for this build")
+  }
+  return address
+}
+
+export const hasDarajaTreasuryLnAddress = (): boolean =>
+  Boolean(Config.DARAJA_TREASURY_LN_ADDRESS)
+
+export const requireDarajaSecurityCredential = (): string => {
+  const cred = Config.DARAJA_SECURITY_CREDENTIAL
+  if (!cred) {
+    throw new Error("DARAJA_SECURITY_CREDENTIAL is not configured for this build")
+  }
+  return cred
+}
+
+export const hasDarajaSecurityCredential = (): boolean =>
+  Boolean(Config.DARAJA_SECURITY_CREDENTIAL)

@@ -63,6 +63,13 @@ export type PayoutRequest = {
   readonly destination: string
   /** Opaque idempotency key set by the caller (prevents double-spend). */
   readonly idempotencyKey: string
+  /**
+   * Account reference for PayBill payouts (the customer's bill account number,
+   * invoice ID, or other identifier the merchant needs to attribute the
+   * payment). Only meaningful for PayBill; Till/PhoneNumber payouts do not
+   * use this. When absent, the provider generates its own reference.
+   */
+  readonly accountReference?: string
 }
 
 /** Contract every M-Pesa payout provider must fulfil. */

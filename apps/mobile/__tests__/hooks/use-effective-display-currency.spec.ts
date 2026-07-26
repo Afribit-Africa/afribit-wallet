@@ -186,10 +186,10 @@ describe("useEffectiveDisplayCurrency", () => {
       expect(result.current.displayCurrency).toBe("JPY")
     })
 
-    it("falls back to USD when no per-account value is set", () => {
+    it("falls back to KES when no per-account value is set", () => {
       const { result } = renderHook(() => useEffectiveDisplayCurrency())
 
-      expect(result.current.displayCurrency).toBe("USD")
+      expect(result.current.displayCurrency).toBe("KES")
     })
 
     it("skips the GraphQL query in self-custodial mode", () => {

@@ -20,9 +20,6 @@ import {
 } from "@app/screens/email-registration-screen"
 import { FullOnboardingFlowScreen } from "@app/screens/full-onboarding-flow"
 import { GaloyAddressScreen } from "@app/screens/galoy-address-screen"
-import { CirclesDashboardScreen } from "@app/screens/people-screen/circles/circles-dashboard-screen"
-import { AllContactsScreen } from "@app/screens/people-screen/contacts/all-contacts"
-import { PeopleTabIcon } from "@app/screens/people-screen/tab-icon"
 import {
   PhoneLoginInitiateScreen,
   PhoneLoginInitiateType,
@@ -35,8 +32,11 @@ import ReceiveScreen from "@app/screens/receive-bitcoin-screen/receive-screen"
 import RedeemBitcoinDetailScreen from "@app/screens/redeem-lnurl-withdrawal-screen/redeem-bitcoin-detail-screen"
 import RedeemBitcoinResultScreen from "@app/screens/redeem-lnurl-withdrawal-screen/redeem-bitcoin-result-screen"
 import SendBitcoinCompletedScreen from "@app/screens/send-bitcoin-screen/send-bitcoin-completed-screen"
-import { SendScreen } from "@app/screens/send-bitcoin-screen/send-screen"
+import SendBitcoinDestinationScreen from "@app/screens/send-bitcoin-screen/send-bitcoin-destination-screen"
 import SendConfirmScreen from "@app/screens/send-bitcoin-screen/send-confirm-screen"
+import { SendMoneyScreen } from "@app/screens/send-bitcoin-screen/send-money-screen"
+import { PaybillScreen } from "@app/screens/send-bitcoin-screen/paybill-screen"
+import { TillNumberScreen } from "@app/screens/send-bitcoin-screen/till-number-screen"
 import { SetLightningAddressScreen } from "@app/screens/lightning-address-screen/set-lightning-address-screen"
 import { AccountScreen } from "@app/screens/settings-screen/account"
 import { DefaultWalletScreen } from "@app/screens/settings-screen/default-wallet"
@@ -71,7 +71,6 @@ import { GetStartedScreen } from "../screens/get-started-screen"
 import { UnsupportedRegionScreen } from "../screens/unsupported-region-screen"
 import { HomeScreen } from "../screens/home-screen"
 import { MapScreen } from "../screens/map-screen/map-screen"
-import { ContactsDetailScreen, PeopleScreen } from "../screens/people-screen"
 import { PriceHistoryScreen } from "../screens/price/price-history-screen"
 import { ScanningQRCodeScreen } from "../screens/send-bitcoin-screen"
 import { SettingsScreen } from "../screens/settings-screen"
@@ -88,36 +87,9 @@ import { UnclaimedDepositsScreen } from "../screens/unclaimed-deposits/unclaimed
 import { OfflineGate } from "@app/self-custodial/components"
 import { useSelfCustodialUnavailable } from "@app/self-custodial/hooks/use-unavailable"
 import { usePersistentStateContext } from "@app/store/persistent-state"
-import { CardDashboardScreen } from "@app/screens/card-screen/card-dashboard-screen"
 import { headerBackControl } from "@app/components/header-back-control/header-back-control"
 import { headerCloseControl } from "@app/components/header-close-control"
 import { NotificationHistoryScreen } from "@app/screens/notification-history-screen/notification-history-screen"
-import {
-  CardAddToMobileWalletScreen,
-  CardChangePinScreen,
-  CardCreatePinScreen,
-  OrderCardScreen,
-  ReplaceCardScreen,
-  CardDetailsScreen,
-  CardLimitsScreen,
-  CardPersonalDetailsScreen,
-  CardSettingsScreen,
-  CardShippingAddressScreen,
-  CardStatementsScreen,
-  CardStatusScreen,
-  CardTransactionDetailsScreen,
-} from "@app/screens/card-screen"
-import {
-  CardIntroducingScreen,
-  CardDetailsScreen as OnboardingCardDetailsScreen,
-  WelcomeOnboardScreen,
-  CardSubscriptionScreen,
-  LoadingCardScreen,
-  CardPersonalInformationScreen,
-  CardPreapprovedScreen,
-  CardProcessingScreen,
-  CardApprovedScreen,
-} from "@app/screens/card-screen/onboarding"
 import {
   WelcomeLevel1Screen,
   EmailBenefitsScreen,
@@ -152,7 +124,6 @@ import {
 } from "@app/screens/account-migration"
 import {
   OnboardingStackParamList,
-  PeopleStackParamList,
   PhoneValidationStackParamList,
   PrimaryStackParamList,
   RootStackParamList,
@@ -174,7 +145,7 @@ const withOfflineGate = <P extends object>(Screen: React.ComponentType<P>) => {
 }
 
 const ScanningQRCodeGated = withOfflineGate(ScanningQRCodeScreen)
-const SendScreenGated = withOfflineGate(SendScreen)
+const SendBitcoinDestinationGated = withOfflineGate(SendBitcoinDestinationScreen)
 const SendConfirmGated = withOfflineGate(SendConfirmScreen)
 const ReceiveOfflineGated = withOfflineGate(ReceiveScreen)
 const ReceiveGated: React.FC = () => (
@@ -284,7 +255,7 @@ export const RootStack = () => {
       />
       <RootNavigator.Screen
         name="sendManual"
-        component={SendScreenGated}
+        component={SendBitcoinDestinationGated}
         options={{
           title: LL.SendBitcoinScreen.title(),
           headerShown: false,
@@ -294,6 +265,21 @@ export const RootStack = () => {
         name="sendConfirm"
         component={SendConfirmGated}
         options={{ title: LL.SendBitcoinScreen.title() }}
+      />
+      <RootNavigator.Screen
+        name="sendMpesaSendMoney"
+        component={SendMoneyScreen}
+        options={{ title: "Send Money", headerShown: false }}
+      />
+      <RootNavigator.Screen
+        name="sendMpesaPaybill"
+        component={PaybillScreen}
+        options={{ title: "Paybill", headerShown: false }}
+      />
+      <RootNavigator.Screen
+        name="sendMpesaTill"
+        component={TillNumberScreen}
+        options={{ title: "Till Number", headerShown: false }}
       />
       <RootNavigator.Screen
         name="sendBitcoinCompleted"
@@ -554,78 +540,6 @@ export const RootStack = () => {
         options={{ title: LL.NotificationHistory.title() }}
       />
       <RootNavigator.Screen
-        name="cardDashboardScreen"
-        component={CardDashboardScreen}
-        options={{
-          title: LL.CardFlow.CardDashboard.title(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="cardDetailsScreen"
-        component={CardDetailsScreen}
-        options={{ title: LL.CardFlow.CardDetails.title() }}
-      />
-      <RootNavigator.Screen
-        name="cardLimitsScreen"
-        component={CardLimitsScreen}
-        options={{ title: LL.CardFlow.CardLimits.title() }}
-      />
-      <RootNavigator.Screen
-        name="cardAddToMobileWalletScreen"
-        component={CardAddToMobileWalletScreen}
-        options={{ title: LL.CardFlow.AddToMobileWallet.title() }}
-      />
-      <RootNavigator.Screen
-        name="cardPersonalDetailsScreen"
-        component={CardPersonalDetailsScreen}
-        options={{ title: LL.CardFlow.PersonalDetails.title() }}
-      />
-      <RootNavigator.Screen
-        name="cardSettingsScreen"
-        component={CardSettingsScreen}
-        options={{ title: LL.CardFlow.CardSettings.title() }}
-      />
-      <RootNavigator.Screen
-        name="cardStatementsScreen"
-        component={CardStatementsScreen}
-        options={{ title: LL.CardFlow.CardStatements.title() }}
-      />
-      <RootNavigator.Screen
-        name="cardTransactionDetailsScreen"
-        component={CardTransactionDetailsScreen}
-        options={{ title: LL.CardFlow.TransactionDetails.title() }}
-      />
-      <RootNavigator.Screen
-        name="cardStatusScreen"
-        component={CardStatusScreen}
-        options={{ title: LL.CardFlow.CardStatus.title() }}
-      />
-      <RootNavigator.Screen
-        name="cardShippingAddressScreen"
-        component={CardShippingAddressScreen}
-        options={{ title: LL.CardFlow.ShippingAddress.title() }}
-      />
-      <RootNavigator.Screen
-        name="cardCreatePinScreen"
-        component={CardCreatePinScreen}
-        options={{ title: LL.CardFlow.PinScreens.CreateFlow.title() }}
-      />
-      <RootNavigator.Screen
-        name="cardChangePinScreen"
-        component={CardChangePinScreen}
-        options={{ title: LL.CardFlow.PinScreens.ChangeFlow.title() }}
-      />
-      <RootNavigator.Screen
-        name="orderCardScreen"
-        component={OrderCardScreen}
-        options={{ title: LL.CardFlow.OrderPhysicalCard.title() }}
-      />
-      <RootNavigator.Screen
-        name="replaceCardScreen"
-        component={ReplaceCardScreen}
-        options={{ title: LL.CardFlow.ReplaceCard.title() }}
-      />
-      <RootNavigator.Screen
         name="selectionScreen"
         component={SelectionScreen}
         options={({ route }) => ({ title: route.params.title })}
@@ -634,97 +548,6 @@ export const RootStack = () => {
         name="onboarding"
         component={OnboardingNavigator}
         options={{ headerShown: false }}
-      />
-      <RootNavigator.Screen
-        name="cardOnboardingIntroducingScreen"
-        component={CardIntroducingScreen}
-        options={{
-          title: LL.CardFlow.Onboarding.CardIntroducing.title(),
-          headerRight: headerCloseControl(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="cardOnboardingDetailsScreen"
-        component={OnboardingCardDetailsScreen}
-        options={{
-          title: LL.CardFlow.Onboarding.CardDetails.title(),
-          headerRight: headerCloseControl(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="cardOnboardingWelcomeScreen"
-        component={WelcomeOnboardScreen}
-        options={{
-          title: "",
-        }}
-      />
-      <RootNavigator.Screen
-        name="cardOnboardingSubscribeScreen"
-        component={CardSubscriptionScreen}
-        options={{
-          title: LL.CardFlow.Onboarding.CardSubscription.subscribeTitle(),
-          headerRight: headerCloseControl(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="cardOnboardingPaymentScreen"
-        component={CardSubscriptionScreen}
-        options={{
-          title: LL.CardFlow.Onboarding.CardSubscription.paymentTitle(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="cardOnboardingLoadingScreen"
-        component={LoadingCardScreen}
-        options={{
-          title: "",
-          headerRight: headerCloseControl(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="cardOnboardingPersonalInfoScreen"
-        component={CardPersonalInformationScreen}
-        options={{
-          title: LL.CardFlow.Onboarding.PersonalInformation.title(),
-          headerLeft: () => <></>,
-          headerRight: headerCloseControl(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="cardOnboardingProcessingScreen"
-        component={CardProcessingScreen}
-        options={{
-          title: "",
-          headerLeft: () => <></>,
-          headerRight: headerCloseControl(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="cardOnboardingPreapprovedScreen"
-        component={CardPreapprovedScreen}
-        options={{
-          title: "",
-          headerLeft: () => <></>,
-          headerRight: headerCloseControl(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="cardOnboardingApprovedScreen"
-        component={CardApprovedScreen}
-        options={{
-          title: LL.CardFlow.CardStatus.title(),
-          headerRight: headerCloseControl(),
-        }}
-      />
-      <RootNavigator.Screen
-        name="selfCustodialBackupMethod"
-        component={BackupMethodScreen}
-        options={{ title: "" }}
-      />
-      <RootNavigator.Screen
-        name="selfCustodialCloudBackup"
-        component={CloudBackupScreen}
-        options={{ title: "" }}
       />
       <RootNavigator.Screen
         name="selfCustodialBackupSecurityChecks"
@@ -890,57 +713,6 @@ export const OnboardingNavigator = () => {
   )
 }
 
-const StackContacts = createNativeStackNavigator<PeopleStackParamList>()
-
-export const ContactNavigator = () => {
-  const { LL } = useI18nContext()
-  const styles = useStyles()
-  const {
-    theme: { colors },
-  } = useTheme()
-
-  return (
-    <StackContacts.Navigator
-      screenOptions={{
-        gestureEnabled: true,
-        headerBackTitle: LL.common.back(),
-        headerStyle: styles.headerStyle,
-        headerTitleStyle: styles.title,
-        headerTintColor: colors.black,
-        headerLeft: headerBackControl(),
-      }}
-      initialRouteName="peopleHome"
-    >
-      <StackContacts.Screen
-        name="peopleHome"
-        component={PeopleScreen}
-        options={{
-          title: LL.PeopleScreen.title(),
-          headerShown: false,
-        }}
-      />
-      <StackContacts.Screen
-        name="contactDetail"
-        component={ContactsDetailScreen}
-        options={{ headerShown: false }}
-      />
-      <StackContacts.Screen
-        name="allContacts"
-        component={AllContactsScreen}
-        options={{
-          title: LL.PeopleScreen.allContacts(),
-        }}
-      />
-      <StackContacts.Screen
-        name="circlesDashboard"
-        component={CirclesDashboardScreen}
-        options={{
-          title: LL.Circles.title(),
-        }}
-      />
-    </StackContacts.Navigator>
-  )
-}
 const StackPhoneValidation = createNativeStackNavigator<PhoneValidationStackParamList>()
 
 export const PhoneLoginNavigator = () => {

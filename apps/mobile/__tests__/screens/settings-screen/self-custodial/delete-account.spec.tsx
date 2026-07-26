@@ -48,11 +48,6 @@ jest.mock("@rn-vui/themed", () => {
   }
 })
 
-jest.mock("@app/components/card-screen", () => ({
-  InfoCard: ({ title }: { title: string }) =>
-    React.createElement("Text", { testID: "info-card" }, title),
-}))
-
 jest.mock("@app/screens/settings-screen/button", () => ({
   SettingsButton: ({ onPress, title }: { onPress: () => void; title: string }) =>
     React.createElement(

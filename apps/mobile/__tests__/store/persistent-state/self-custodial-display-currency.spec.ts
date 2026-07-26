@@ -12,8 +12,8 @@ const baseState: PersistentState = {
 }
 
 describe("getSelfCustodialDisplayCurrency", () => {
-  it("returns USD as the ultimate default", () => {
-    expect(getSelfCustodialDisplayCurrency(baseState)).toBe("USD")
+  it("returns KES as the ultimate default", () => {
+    expect(getSelfCustodialDisplayCurrency(baseState)).toBe("KES")
   })
 
   it("returns the per-account map value when set for the active id", () => {
@@ -49,33 +49,33 @@ describe("getSelfCustodialDisplayCurrency", () => {
     ).toBe("GBP")
   })
 
-  it("falls back to USD when map is absent for the active id", () => {
+  it("falls back to KES when map is absent for the active id", () => {
     const state: PersistentState = {
       ...baseState,
       activeAccountId: "self-custodial-new",
       selfCustodialDisplayCurrencyByAccountId: { "self-custodial-other": "EUR" },
     }
 
-    expect(getSelfCustodialDisplayCurrency(state)).toBe("USD")
+    expect(getSelfCustodialDisplayCurrency(state)).toBe("KES")
   })
 
-  it("returns USD when active is custodial", () => {
+  it("returns KES when active is custodial", () => {
     const state: PersistentState = {
       ...baseState,
       activeAccountId: DefaultAccountId.Custodial,
       selfCustodialDisplayCurrencyByAccountId: { "self-custodial-1": "EUR" },
     }
 
-    expect(getSelfCustodialDisplayCurrency(state)).toBe("USD")
+    expect(getSelfCustodialDisplayCurrency(state)).toBe("KES")
   })
 
-  it("returns USD when there is no active account", () => {
+  it("returns KES when there is no active account", () => {
     const state: PersistentState = {
       ...baseState,
       selfCustodialDisplayCurrencyByAccountId: { "self-custodial-1": "EUR" },
     }
 
-    expect(getSelfCustodialDisplayCurrency(state)).toBe("USD")
+    expect(getSelfCustodialDisplayCurrency(state)).toBe("KES")
   })
 })
 
